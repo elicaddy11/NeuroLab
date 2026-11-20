@@ -1,0 +1,105 @@
+.placeholderWorkspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+  position: relative;
+  overflow: hidden;
+}
+
+.placeholderWorkspace::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 60% 60% at center, black 20%, transparent 80%);
+}
+
+.placeholderContent {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  padding: var(--space-6);
+  animation: fade-in 0.6s var(--ease-out) both;
+}
+
+.placeholderIcon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: radial-gradient(circle at 50% 40%, rgba(34, 211, 238, 0.06), transparent 70%);
+  color: var(--accent-cyan);
+  position: relative;
+}
+
+.placeholderIcon::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--border-faint);
+  opacity: 0.5;
+}
+
+.placeholderTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-2);
+}
+
+.placeholderDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-6);
+}
+
+.placeholderTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+
+.placeholderTagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  animation: pulse-soft 2s var(--ease-in-out) infinite;
+}
+
+/* Corner markers for viewport feel */
+.cornerMarker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--border-strong);
+  z-index: 2;
+}
+
+.cornerMarker.tl { top: 12px; left: 12px; border-top: 1px solid; border-left: 1px solid; }
+.cornerMarker.tr { top: 12px; right: 12px; border-top: 1px solid; border-right: 1px solid; }
+.cornerMarker.bl { bottom: 12px; left: 12px; border-bottom: 1px solid; border-left: 1px solid; }
+.cornerMarker.br { bottom: 12px; right: 12px; border-bottom: 1px solid; border-right: 1px solid; }
