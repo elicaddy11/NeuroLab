@@ -6,6 +6,41 @@
   background: var(--bg-void);
 }
 
+.meshCoverageNote {
+  margin: 0 0 14px;
+  padding: 9px 10px;
+  border-left: 2px solid var(--accent-cyan);
+  background: rgba(34, 211, 238, .045);
+}
+
+.meshCoverageNote strong {
+  color: var(--accent-cyan);
+  font: 9px var(--font-mono);
+  letter-spacing: .05em;
+}
+
+.meshCoverageNote p,
+.meshCoverageNote span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.meshCoverageNote span {
+  color: var(--text-secondary);
+}
+
+.meshCoverageNote.unavailable {
+  border-color: var(--accent-amber);
+  background: rgba(245, 158, 11, .04);
+}
+
+.meshCoverageNote.unavailable strong {
+  color: var(--accent-amber);
+}
+
 /* Left panel */
 .brainLeftPanel {
   width: var(--panel-width-left);
@@ -15,6 +50,12 @@
   flex-direction: column;
 }
 
+.vtDeepBtn {
+  width: 42px;
+  font: 8px var(--font-mono);
+  letter-spacing: .04em;
+}
+
 /* Right panel */
 .brainRightPanel {
   width: var(--panel-width-right);
@@ -22,6 +63,15 @@
   border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
+}
+
+.workspacePanel {
+  height: 100%;
+}
+
+.brainLeftPanel .panelBody,
+.brainRightPanel .panelBody {
+  padding-top: 16px;
 }
 
 /* Center viewport */
@@ -61,6 +111,13 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out);
+  z-index: 2;
+}
+
+.viewportAxes.visible {
+  opacity: 1;
 }
 
 .viewportAxes::before,
@@ -86,53 +143,20 @@
   width: 1px;
 }
 
-/* Brain placeholder visual */
+/* Anatomical model viewport */
 .brainStage {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 }
 
-.brainVisual {
-  width: 360px;
-  height: 300px;
-  position: relative;
-  filter: drop-shadow(0 0 60px rgba(34, 211, 238, 0.08));
-}
-
-/* Rotating outer ring */
-.brainRing {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px solid rgba(34, 211, 238, 0.12);
-  animation: rotate-slow 80s linear infinite;
-}
-
-.brainRing.r1 { width: 380px; height: 380px; }
-.brainRing.r2 { width: 320px; height: 320px; border-style: dashed; border-color: rgba(59, 130, 246, 0.08); animation-duration: 120s; animation-direction: reverse; }
-
-/* Scan line */
-.scanLine {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  height: 80px;
-  top: 0;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(34, 211, 238, 0.04) 40%,
-    rgba(34, 211, 238, 0.1) 50%,
-    rgba(34, 211, 238, 0.04) 60%,
-    transparent 100%
-  );
-  animation: scan-line 6s var(--ease-in-out) infinite;
-  pointer-events: none;
+.brainCanvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
 }
 
 /* Viewport overlay HUD */
@@ -144,6 +168,7 @@
   font-size: 10px;
   color: var(--text-tertiary);
   letter-spacing: 0.04em;
+  z-index: 3;
 }
 
 .hudCorner {
@@ -172,6 +197,204 @@
 .hudVal {
   color: var(--accent-cyan);
   opacity: 0.8;
+}
+
+.hudValMuted {
+  color: var(--accent-amber);
+  opacity: 0.78;
+}
+
+.hudBottomNote {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: rgba(148, 163, 184, 0.55);
+  font-size: 8px;
+  letter-spacing: 0.075em;
+}
+
+.viewportHoverLabel {
+  position: absolute;
+  top: 17px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border: 1px solid var(--border-luminous);
+  color: var(--text-primary);
+  background: rgba(9, 15, 23, 0.9);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.12);
+  font-size: 11px;
+  letter-spacing: 0.035em;
+}
+
+.orientationCard {
+  height: 92px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--text-tertiary);
+  background:
+    linear-gradient(90deg, transparent calc(50% - .5px), var(--border-subtle) 50%, transparent calc(50% + .5px)),
+    linear-gradient(transparent calc(50% - .5px), var(--border-subtle) 50%, transparent calc(50% + .5px));
+  border: 1px solid var(--border-faint);
+}
+
+.orientationAxis {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.axis-front { top: 8px; }
+.axis-back { bottom: 8px; }
+.axis-left { left: 12px; }
+.axis-right { right: 12px; }
+.orientationCenter { color: var(--accent-cyan); font-size: 10px; text-shadow: 0 0 10px var(--accent-cyan); }
+
+.orientationCaption {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font: 9px var(--font-mono);
+  text-align: center;
+  letter-spacing: .04em;
+}
+
+.brainViewPresets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.brainViewPresets button {
+  padding: 6px 3px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, .015);
+  font-size: 9px;
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.brainViewPresets button:hover {
+  color: var(--accent-cyan);
+  border-color: var(--border-luminous);
+  background: rgba(34, 211, 238, .05);
+}
+
+.brainViewPresets button:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.locatorLegend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.locatorLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.locatorLegendSwatch {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(100, 190, 255, .28);
+}
+
+.locatorLegendNote {
+  margin-top: 10px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.structureProfile {
+  padding: 2px 0 14px;
+}
+
+.structureProfile h2 {
+  margin: 8px 0;
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+.structureProfile p,
+.profileCopy {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.structureEyebrow {
+  color: var(--accent-cyan);
+  font-size: 9px;
+}
+
+.profileList {
+  display: grid;
+  gap: 8px;
+}
+
+.profileList li {
+  position: relative;
+  padding-left: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.profileList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  opacity: .7;
+}
+
+.connectedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.connectionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  background: rgba(255,255,255,.015);
+  font-size: 10px;
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.connectionChip:hover {
+  color: var(--accent-cyan);
+  border-color: var(--border-luminous);
+  background: rgba(34, 211, 238, .05);
+}
+
+.connectionChip span {
+  color: var(--accent-cyan);
+  opacity: .65;
 }
 
 /* Viewport toolbar (bottom floating) */
@@ -207,6 +430,29 @@
 .vtBtn:hover {
   color: var(--accent-cyan);
   background: rgba(34, 211, 238, 0.06);
+}
+
+.vtBtn.active {
+  color: var(--accent-cyan);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.vtBtn:disabled,
+.viewBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.vtBtn:disabled:hover {
+  color: var(--text-tertiary);
+  background: none;
+}
+
+.vtBtn:focus-visible,
+.viewBtn:focus-visible,
+.regionRow:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }
 
 .vtDivider {
@@ -246,6 +492,8 @@
   transition: background 0.18s var(--ease-out), color 0.18s var(--ease-out);
   width: 100%;
   text-align: left;
+  border: 0;
+  background: none;
 }
 
 .regionRow:hover {
@@ -284,10 +532,43 @@
   text-overflow: ellipsis;
 }
 
-.regionCount {
+.regionMeshStatus {
+  padding: 2px 3px;
+  border: 1px solid var(--border-faint);
+  color: var(--text-muted);
+  font: 8px var(--font-mono);
+  letter-spacing: .04em;
+}
+
+.regionAbbr {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-muted);
+}
+
+.treeEmpty,
+.dataNotice,
+.unavailableControl,
+.inspectorNotice {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.treeEmpty {
+  padding: var(--space-2);
+}
+
+.dataNotice {
+  margin: var(--space-3) var(--space-2) 0;
+}
+
+.unavailableControl {
+  margin-bottom: var(--space-2);
+}
+
+.inspectorNotice {
+  color: var(--text-secondary);
 }
 
 .regionChildren {
@@ -335,21 +616,10 @@
   height: 28px;
   border: 1px solid currentColor;
   border-radius: 50%;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.7;
-}
-
-.viewBtn.active .viewBtnFace {
-  opacity: 1;
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
-}
-
-.viewBtnFace::after {
-  content: attr(data-axis);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   font-size: 9px;
 }
 
@@ -470,16 +740,38 @@
     width: 240px;
   }
   .brainRightPanel {
-    display: none;
+    width: 250px;
   }
 }
 
 @media (max-width: 640px) {
+  .brainWorkspace {
+    display: block;
+    overflow-y: auto;
+  }
+  .brainViewport {
+    height: min(58vh, 500px);
+    min-height: 340px;
+  }
+  .brainLeftPanel,
+  .brainRightPanel {
+    width: 100%;
+    display: block;
+    border: 0;
+  }
   .brainLeftPanel {
-    display: none;
+    order: 2;
   }
-  .brainVisual {
-    width: 260px;
-    height: 220px;
+  .brainLeftPanel .workspacePanel,
+  .brainRightPanel .workspacePanel {
+    height: auto;
   }
+  .brainLeftPanel .panelBody {
+    max-height: 290px;
+  }
+  .brainRightPanel .panelBody {
+    max-height: 420px;
+  }
+  .hudBottomNote { font-size: 7px; bottom: 70px; }
+  .viewportToolbar { bottom: 12px; }
 }

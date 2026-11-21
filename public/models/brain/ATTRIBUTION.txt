@@ -1,0 +1,22 @@
+BodyParts3D v4.0 anatomical meshes
+
+Required attribution:
+"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"
+
+Official source and license:
+https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
+https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
+https://creativecommons.org/licenses/by/4.0/
+
+The GLB was built from selected FJ mesh segments in the official
+isa_BP3D_4.0_obj_99.zip archive. BodyParts3D represents anatomical concepts
+using a 3D model of an adult human male. NeuroLab groups selected source
+segments into display regions, rotates and scales the model for the viewer,
+recomputes mesh normals, and applies the region colors. Region coverage is
+documented in src/workspaces/Brain/brainVisualizationData.ts.
+
+To regenerate the GLB with Node.js 22+ and unzip installed:
+node --experimental-strip-types scripts/build-brain-atlas.mjs /path/to/isa_BP3D_4.0_obj_99.zip
+
+The cortical lobe groups contain selected source gyri rather than complete
+lobe masks. The model does not provide a separate prefrontal-cortex segment.

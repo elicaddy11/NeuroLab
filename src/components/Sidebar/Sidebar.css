@@ -5,26 +5,32 @@
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: var(--space-3) 0;
+  align-items: stretch;
+  padding: 14px 10px;
   position: relative;
   z-index: 20;
 }
 
 /* Brand mark */
 .brand {
-  width: 36px;
-  height: 36px;
+  height: 40px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 10px;
   border-radius: var(--radius-md);
-  background: radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.12), transparent 70%);
-  border: 1px solid var(--border-subtle);
-  margin-bottom: var(--space-5);
+  padding: 0 9px;
+  margin-bottom: 27px;
   position: relative;
   color: var(--accent-cyan);
   transition: box-shadow 0.4s var(--ease-out);
+}
+
+.brand span {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .02em;
 }
 
 .brand:hover {
@@ -49,21 +55,23 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
   flex: 1;
   width: 100%;
-  padding: 0 var(--space-2);
+  padding: 0;
 }
 
 .navItem {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto;
+  width: 100%;
+  height: 42px;
+  margin: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  justify-content: flex-start;
+  gap: 11px;
+  padding: 0 11px;
   border-radius: var(--radius-md);
   color: var(--text-tertiary);
   position: relative;
@@ -83,7 +91,7 @@
 .navItem.active::before {
   content: "";
   position: absolute;
-  left: -8px;
+  left: -11px;
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
@@ -94,10 +102,9 @@
 }
 
 .navLabel {
-  font-size: 8.5px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 450;
+  letter-spacing: .01em;
 }
 
 /* Tooltip on hover */
@@ -143,11 +150,11 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-faint);
   width: 100%;
-  align-items: center;
+  align-items: stretch;
 }
 
 .navBottom .navItem {
-  width: 40px;
+  width: 100%;
   height: 40px;
 }
 
@@ -161,4 +168,32 @@
   right: 6px;
   animation: pulse-soft 2.5s var(--ease-in-out) infinite;
   box-shadow: 0 0 8px var(--status-online);
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: 60px;
+    align-items: center;
+    padding: 12px 6px;
+  }
+  .brand {
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    padding: 0;
+    margin-bottom: 22px;
+  }
+  .brand span { display: none; }
+  .nav { align-items: center; }
+  .navItem {
+    width: 44px;
+    height: 46px;
+    justify-content: center;
+    padding: 0;
+  }
+  .navItem.active::before { left: -7px; }
+  .navLabel { display: none; }
+  .navBottom { align-items: center; width: 100%; }
+  .navBottom .navItem { width: 40px; }
+  .statusDot { right: 5px; }
 }

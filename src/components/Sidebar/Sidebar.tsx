@@ -26,6 +26,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
     <aside className="sidebar">
       <div className="brand" title="NeuroLab">
         <CubeIcon size={20} />
+        <span>NeuroLab</span>
       </div>
 
       <nav className="nav">
@@ -41,7 +42,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
               aria-current={isActive ? "page" : undefined}
             >
               <Icon size={20} />
-              <span className="navLabel">{section.abbr}</span>
+              <span className="navLabel">{section.label}</span>
               <span className="tooltip">
                 <span className="tooltipTitle">{section.label}</span>
                 <span className="tooltipSub">{section.description}</span>

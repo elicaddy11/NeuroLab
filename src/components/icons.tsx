@@ -219,6 +219,23 @@ export function PulseIcon({ size = 24, className, style }: IconProps) {
   );
 }
 
+export function PlayIcon({ size = 24, className, style }: IconProps) {
+  return (
+    <svg {...base(size, className, style)} fill="currentColor" stroke="none">
+      <path d="M7 4.8v14.4a.8.8 0 0 0 1.2.7l11-7.2a.8.8 0 0 0 0-1.4l-11-7.2a.8.8 0 0 0-1.2.7Z" />
+    </svg>
+  );
+}
+
+export function PauseIcon({ size = 24, className, style }: IconProps) {
+  return (
+    <svg {...base(size, className, style)} fill="currentColor" stroke="none">
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
+    </svg>
+  );
+}
+
 export function WaveformIcon({ size = 24, className, style }: IconProps) {
   return (
     <svg {...base(size, className, style)}>

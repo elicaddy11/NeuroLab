@@ -45,6 +45,7 @@
   max-width: 420px;
   position: relative;
   margin-left: auto;
+  z-index: 30;
 }
 
 .searchInput {
@@ -92,89 +93,48 @@
   pointer-events: none;
 }
 
-/* View controls */
-.viewControls {
+.searchResults {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  width: min(460px, calc(100vw - 32px));
+  max-height: min(420px, 70vh);
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  background: rgba(12, 17, 25, 0.97);
+  box-shadow: var(--shadow-2), 0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.searchResult {
   display: flex;
+  width: 100%;
   align-items: center;
-  gap: 2px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 2px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-faint);
 }
 
-.vcBtn {
-  width: 28px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
-  transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out);
-}
-
-.vcBtn:hover {
-  color: var(--text-secondary);
-  background: rgba(148, 163, 184, 0.05);
-}
-
-.vcBtn.active {
-  color: var(--accent-cyan);
-  background: rgba(34, 211, 238, 0.08);
-}
-
-.vcDivider {
-  width: 1px;
-  height: 16px;
-  background: var(--border-subtle);
-  margin: 0 2px;
-}
-
-/* System status */
-.systemStatus {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--text-tertiary);
-  letter-spacing: 0.03em;
-}
-
-.statItem {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-}
-
-.statDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-}
-
-.statLabel {
-  color: var(--text-muted);
-}
-
-.statValue {
-  color: var(--text-secondary);
-}
+.searchResult:last-child { border-bottom: 0; }
+.searchResult:hover,
+.searchResult:focus-visible { background: rgba(34, 211, 238, 0.06); outline: none; }
+.searchResultCopy { display: grid; gap: 3px; min-width: 0; }
+.searchResultCopy strong { overflow: hidden; color: var(--text-primary); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.searchResultCopy > span { overflow: hidden; color: var(--text-tertiary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.searchResultCategory { flex: 0 0 auto; color: var(--accent-cyan); font: 8px var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
+.searchNoResults { padding: 14px 10px; color: var(--text-tertiary); font-size: 10px; }
 
 @media (max-width: 900px) {
   .searchWrap {
     max-width: 200px;
   }
-  .systemStatus .statItem:nth-child(n+2) {
-    display: none;
-  }
 }
 
 @media (max-width: 640px) {
-  .contextSub,
-  .viewControls .vcBtn:nth-child(n+4) {
+  .contextSub {
     display: none;
   }
   .searchWrap {

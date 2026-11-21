@@ -1,229 +1,262 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Panel, PanelSection } from "../../components/Panel/Panel";
 import {
-  PlusIcon,
   InfoIcon,
-  TargetIcon,
   CrosshairIcon,
   ZoomInIcon,
   ZoomOutIcon,
   RotateIcon,
   RulerIcon,
   EyeIcon,
-  ShareIcon,
 } from "../../components/icons";
 import { BrainVisualization } from "./BrainVisualization";
 import { RegionTree } from "./RegionTree";
-import { SAMPLE_STRUCTURE, type BrainRegion } from "./brainData";
+import { findBrainRegion, type BrainRegion } from "./brainData";
+import {
+  BRAIN_COLOR_LEGEND,
+  BRAIN_DEEP_REGION_IDS,
+  BRAIN_MESH_REGION_BY_ID,
+} from "./brainVisualizationData";
 import "./BrainWorkspace.css";
 
-type ViewPlane = "sagittal" | "coronal" | "axial";
+interface BrainWorkspaceProps {
+  searchQuery: string;
+  focusRegionId?: string | null;
+  focusRegionSequence?: number;
+}
 
-export function BrainWorkspace() {
-  const [selectedRegion, setSelectedRegion] = useState<BrainRegion | null>(null);
-  const [viewPlane, setViewPlane] = useState<ViewPlane>("sagittal");
+const MIN_ZOOM = 0.65;
+const MAX_ZOOM = 1.8;
 
-  const hasSelection = selectedRegion !== null;
-  const structure = SAMPLE_STRUCTURE;
+export function BrainWorkspace({
+  searchQuery,
+  focusRegionId,
+  focusRegionSequence,
+}: BrainWorkspaceProps) {
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [showCrosshair, setShowCrosshair] = useState(false);
+  const [showModel, setShowModel] = useState(true);
+  const [revealDeepStructures, setRevealDeepStructures] = useState(false);
+  const [hoveredRegionLabel, setHoveredRegionLabel] = useState<string | null>(null);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
+
+  useEffect(() => {
+    if (!focusRegionId) return;
+    setSelectedRegionId(focusRegionId);
+    if (BRAIN_DEEP_REGION_IDS.has(focusRegionId)) {
+      setRevealDeepStructures(true);
+    }
+  }, [focusRegionId, focusRegionSequence]);
+
+  const selectedEntry = selectedRegionId ? findBrainRegion(selectedRegionId) : null;
+  const selectedRegion = selectedEntry?.region.details ? selectedEntry.region : null;
+  const selectedMeshRegion = selectedRegionId
+    ? BRAIN_MESH_REGION_BY_ID.get(selectedRegionId)
+    : undefined;
+  const details = selectedRegion?.details;
+
+  const changeZoom = (amount: number) => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+
+    if (amount > 0) controls.dollyOut(1.2);
+    else controls.dollyIn(1.2);
+    setZoom(Number(Math.max(0.65, Math.min(1.8, 5.2 / controls.getDistance())).toFixed(2)));
+  };
+
+  const selectRegion = (region: BrainRegion) => {
+    setSelectedRegionId(region.id);
+    if (BRAIN_DEEP_REGION_IDS.has(region.id)) {
+      setRevealDeepStructures(true);
+    }
+  };
+  const setCameraView = (view: "lateral" | "anterior" | "superior") => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    controls.object.up.set(0, 1, 0);
+    if (view === "lateral") controls.object.position.set(5.2, 0.14, 0);
+    else if (view === "anterior") controls.object.position.set(0, 0.14, 5.2);
+    else {
+      controls.object.position.set(0, 5.2, 0);
+      controls.object.up.set(0, 0, -1);
+    }
+    controls.target.set(0, 0, 0);
+    controls.update();
+  };
+  const resetView = () => {
+    setZoom(1);
+    controlsRef.current?.object.up.set(0, 1, 0);
+    controlsRef.current?.reset();
+  };
 
   return (
     <div className="brainWorkspace">
-      {/* Left panel — exploration & navigation */}
-      <div className="brainLeftPanel">
-        <Panel
-          title="Anatomical Tree"
-          actions={
-            <button className="panelAction" aria-label="Add region">
-              <PlusIcon size={14} />
-            </button>
-          }
-        >
-          <PanelSection title="Region Hierarchy">
+      <aside className="brainLeftPanel">
+        <Panel title="Anatomy index" className="workspacePanel">
+          <PanelSection title="Brain structures">
             <RegionTree
-              selectedId={selectedRegion?.id ?? null}
-              onSelect={setSelectedRegion}
+              selectedId={selectedRegionId}
+              searchQuery={searchQuery}
+              onSelect={selectRegion}
             />
+            <p className="dataNotice">
+              Drag to rotate · scroll to zoom · right-drag to pan. Lobe groups include selected gyri only.
+            </p>
           </PanelSection>
-
           <div className="panelDivider" />
-
-          <PanelSection title="View Plane">
-            <div className="viewControls2D">
-              {(["sagittal", "coronal", "axial"] as ViewPlane[]).map((plane) => (
-                <button
-                  key={plane}
-                  className={`viewBtn ${viewPlane === plane ? "active" : ""}`}
-                  onClick={() => setViewPlane(plane)}
-                >
-                  <span className="viewBtnFace" data-axis={plane[0].toUpperCase()} />
-                  <span>{plane}</span>
-                </button>
+          <PanelSection title="View orientation">
+            <div className="orientationCard">
+              <span className="orientationAxis axis-front">A</span>
+              <span className="orientationAxis axis-back">P</span>
+              <span className="orientationAxis axis-left">L</span>
+              <span className="orientationAxis axis-right">R</span>
+              <span className="orientationCenter">●</span>
+            </div>
+            <div className="orientationCaption">ANTERIOR · POSTERIOR · L/R</div>
+            <div className="brainViewPresets" role="group" aria-label="Preset viewing angles">
+              <button type="button" onClick={() => setCameraView("lateral")}>Lateral</button>
+              <button type="button" onClick={() => setCameraView("anterior")}>Anterior</button>
+              <button type="button" onClick={() => setCameraView("superior")}>Superior</button>
+            </div>
+          </PanelSection>
+          <div className="panelDivider" />
+          <PanelSection title="Anatomy color key">
+            <div className="locatorLegend">
+              {BRAIN_COLOR_LEGEND.map(({ id, label, color }) => (
+                <div className="locatorLegendItem" key={id}>
+                  <span className="locatorLegendSwatch" style={{ backgroundColor: color }} />
+                  <span>{label}</span>
+                </div>
               ))}
             </div>
+            <p className="locatorLegendNote">
+              Colors follow source mesh segments. Lobe colors group selected gyri, not complete lobe masks.
+            </p>
           </PanelSection>
         </Panel>
-      </div>
+      </aside>
 
-      {/* Center viewport */}
-      <div className="brainViewport">
+      <section className="brainViewport" aria-label="Interactive 3D brain viewport">
         <div className="viewportCanvas">
           <div className="viewportGrid" />
-          <div className="viewportAxes" />
-          <div className="scanLine" />
-
-          <div className="brainStage">
-            <div className="brainVisual">
-              <span className="brainRing r1" />
-              <span className="brainRing r2" />
-              <BrainVisualization />
+          <div className={`viewportAxes ${showCrosshair ? "visible" : ""}`} aria-hidden="true" />
+          {showModel && (
+            <div className="brainStage">
+              <BrainVisualization
+                selectedRegionId={selectedRegionId}
+                revealDeepStructures={revealDeepStructures}
+                onSelectRegion={selectRegion}
+                onHoverRegion={setHoveredRegionLabel}
+                onZoomChange={(distance) => setZoom(Number(Math.max(0.65, Math.min(1.8, 5.2 / distance)).toFixed(2)))}
+                controlsRef={controlsRef}
+              />
             </div>
-          </div>
+          )}
 
-          {/* HUD overlays */}
-          <div className="viewportHud">
+          <div className="viewportHud" aria-live="polite">
             <div className="hudCorner tl">
-              <div className="hudLine">
-                <span className="hudKey">VIEW</span>
-                <span className="hudVal">{viewPlane.toUpperCase()}</span>
-              </div>
-              <div className="hudLine">
-                <span className="hudKey">SLICE</span>
-                <span className="hudVal">—</span>
-              </div>
+              <div className="hudLine"><span className="hudKey">MODEL</span><span className="hudVal">BODYPARTS3D 4.0</span></div>
+              <div className="hudLine"><span className="hudKey">STATUS</span><span className="hudVal hudValMuted">SEGMENTED MESHES</span></div>
             </div>
             <div className="hudCorner tr">
-              <div className="hudLine">
-                <span className="hudKey">SCALE</span>
-                <span className="hudVal">1:1.00</span>
-              </div>
-              <div className="hudLine">
-                <span className="hudKey">FPS</span>
-                <span className="hudVal">60</span>
-              </div>
-            </div>
-            <div className="hudCorner bl">
-              <div className="hudLine">
-                <span className="hudKey">MODEL</span>
-                <span className="hudVal">PLACEHOLDER</span>
-              </div>
+              <div className="hudLine"><span className="hudKey">ZOOM</span><span className="hudVal">{Math.round(zoom * 100)}%</span></div>
             </div>
             <div className="hudCorner br">
-              <div className="hudLine">
-                <span className="hudKey">REGIONS</span>
-                <span className="hudVal">93</span>
-              </div>
+              <div className="hudLine"><span className="hudKey">REGION</span><span className="hudVal">{selectedRegion?.abbr ?? "NONE"}</span></div>
             </div>
+            {hoveredRegionLabel && <div className="viewportHoverLabel">{hoveredRegionLabel}</div>}
+            <div className="hudBottomNote">CORTICAL LOBE COLORS GROUP SELECTED GYRI · PREFRONTAL CORTEX NOT SEGMENTED</div>
           </div>
 
-          {/* Floating viewport toolbar */}
-          <div className="viewportToolbar">
-            <button className="vtBtn" aria-label="Zoom in"><ZoomInIcon size={16} /></button>
-            <button className="vtBtn" aria-label="Zoom out"><ZoomOutIcon size={16} /></button>
+          <div className="viewportToolbar" role="group" aria-label="3D brain controls">
+            <button type="button" className="vtBtn" aria-label="Zoom out" disabled={zoom <= MIN_ZOOM} onClick={() => changeZoom(-0.1)}><ZoomOutIcon size={16} /></button>
+            <button type="button" className="vtBtn" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => changeZoom(0.1)}><ZoomInIcon size={16} /></button>
             <div className="vtDivider" />
-            <button className="vtBtn" aria-label="Rotate"><RotateIcon size={16} /></button>
-            <button className="vtBtn" aria-label="Ruler"><RulerIcon size={16} /></button>
-            <button className="vtBtn" aria-label="Crosshair"><CrosshairIcon size={16} /></button>
+            <button type="button" className="vtBtn" aria-label="Reset camera" title="Reset camera" onClick={resetView}><RotateIcon size={16} /></button>
+            <button
+              type="button"
+              className={`vtBtn vtDeepBtn ${revealDeepStructures ? "active" : ""}`}
+              aria-label={revealDeepStructures ? "Hide deep structures" : "Reveal deep structures"}
+              aria-pressed={revealDeepStructures}
+              title={revealDeepStructures ? "Hide deep structures" : "Reveal deep structures"}
+              onClick={() => setRevealDeepStructures((current) => !current)}
+            >
+              DEEP
+            </button>
+            <button type="button" className={`vtBtn ${showCrosshair ? "active" : ""}`} aria-label="Toggle crosshair" aria-pressed={showCrosshair} onClick={() => setShowCrosshair((current) => !current)}><CrosshairIcon size={16} /></button>
+            <button type="button" className="vtBtn" aria-label="Measurement unavailable: no calibrated anatomical model" title="Unavailable: no calibrated anatomical model." disabled><RulerIcon size={16} /></button>
             <div className="vtDivider" />
-            <button className="vtBtn" aria-label="Visibility"><EyeIcon size={16} /></button>
-            <span className="vtLabel">100%</span>
+            <button
+              type="button"
+              className={`vtBtn ${showModel ? "" : "active"}`}
+              aria-label={showModel ? "Hide model" : "Show model"}
+              aria-pressed={!showModel}
+              onClick={() => {
+                if (!showModel) setZoom(1);
+                setShowModel((current) => !current);
+              }}
+            >
+              <EyeIcon size={16} />
+            </button>
+            <span className="vtLabel">{Math.round(zoom * 100)}%</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Right panel — structure info */}
-      <div className="brainRightPanel">
-        <Panel
-          title="Structure Inspector"
-          actions={
-            <>
-              <button className="panelAction" aria-label="Pin"><TargetIcon size={13} /></button>
-              <button className="panelAction" aria-label="Share"><ShareIcon size={13} /></button>
-            </>
-          }
-        >
-          {!hasSelection ? (
+      <aside className="brainRightPanel">
+        <Panel title="Structure profile" className="workspacePanel">
+          {!details || !selectedRegion ? (
             <div className="structureEmpty">
-              <div className="structureEmptyIcon">
-                <InfoIcon size={22} />
-              </div>
-              <p className="structureEmptyText">
-                Select a region from the anatomical tree to inspect its properties, connections, and functional data.
-              </p>
+              <div className="structureEmptyIcon"><InfoIcon size={22} /></div>
+              <p className="structureEmptyText">Choose one of 12 anatomy entries. Prefrontal cortex is information-only in this mesh.</p>
             </div>
           ) : (
             <div className="fade-in">
-              <PanelSection title="Overview">
-                <div className="metaRow">
-                  <span className="metaKey">NAME</span>
-                  <span className="metaVal">{structure.name}</span>
-                </div>
-                <div className="metaRow">
-                  <span className="metaKey">ABBR</span>
-                  <span className="metaVal">{structure.abbr}</span>
-                </div>
-                <div className="metaRow">
-                  <span className="metaKey">SYSTEM</span>
-                  <span className="metaVal">{structure.system}</span>
-                </div>
-                <div className="metaRow">
-                  <span className="metaKey">HEMISPHERE</span>
-                  <span className="metaVal">{structure.hemisphere}</span>
-                </div>
-              </PanelSection>
-
-              <div className="panelDivider" />
-
-              <PanelSection title="Morphometry">
-                <div className="metaRow">
-                  <span className="metaKey">VOLUME</span>
-                  <span className="metaVal">{structure.volume}</span>
-                </div>
-                <div className="metaRow">
-                  <span className="metaKey">NEURONS</span>
-                  <span className="metaVal">{structure.neurons}</span>
-                </div>
-              </PanelSection>
-
-              <div className="panelDivider" />
-
-              <PanelSection title="Stereotactic Coords">
-                <div className="coordBox">
-                  <div className="coordCell">
-                    <span className="coordAxis">X</span>
-                    <span className="coordValue">{structure.coords.x.toFixed(1)}</span>
-                  </div>
-                  <div className="coordCell">
-                    <span className="coordAxis">Y</span>
-                    <span className="coordValue">{structure.coords.y.toFixed(1)}</span>
-                  </div>
-                  <div className="coordCell">
-                    <span className="coordAxis">Z</span>
-                    <span className="coordValue">{structure.coords.z.toFixed(1)}</span>
-                  </div>
-                </div>
-              </PanelSection>
-
-              <div className="panelDivider" />
-
-              <PanelSection title="Function">
-                <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                  {structure.function}
+              <div className="structureProfile">
+                <span className="structureEyebrow mono">{selectedRegion.abbr} · INTRODUCTORY OVERVIEW</span>
+                <h2>{selectedRegion.label}</h2>
+                <p>{details.description}</p>
+              </div>
+              <div className={`meshCoverageNote ${selectedMeshRegion ? "" : "unavailable"}`}>
+                <strong>
+                  {selectedMeshRegion ? "SOURCE SEGMENT PRESENT" : "INFORMATION ONLY · NO SEPARATE MESH"}
+                </strong>
+                <p>
+                  {selectedMeshRegion?.coverageNote ??
+                    "BodyParts3D 4.0 does not include a dedicated prefrontal-cortex segment in this model."}
                 </p>
-              </PanelSection>
-
+                {selectedMeshRegion && (
+                  <span>{selectedMeshRegion.sourceComponents.join(" · ")}</span>
+                )}
+              </div>
               <div className="panelDivider" />
-
-              <PanelSection title="Tags">
-                <div className="tagList">
-                  {structure.tags.map((tag) => (
-                    <span key={tag} className="tag">{tag}</span>
-                  ))}
+              <PanelSection title="Anatomical location">
+                <p className="profileCopy">{details.location}</p>
+              </PanelSection>
+              <div className="panelDivider" />
+              <PanelSection title="Major functions">
+                <ul className="profileList">{details.functions.map((item) => <li key={item}>{item}</li>)}</ul>
+              </PanelSection>
+              <div className="panelDivider" />
+              <PanelSection title="Connected structures">
+                <div className="connectedList">
+                  {details.connections.map((id) => {
+                    const connection = findBrainRegion(id)?.region;
+                    if (!connection) return null;
+                    return <button type="button" className="connectionChip" key={id} onClick={() => selectRegion(connection)}>{connection.label}<span>↗</span></button>;
+                  })}
                 </div>
+              </PanelSection>
+              <div className="panelDivider" />
+              <PanelSection title="Associated systems">
+                <div className="tagList">{details.systems.map((system) => <span className="tag" key={system}>{system}</span>)}</div>
               </PanelSection>
             </div>
           )}
         </Panel>
-      </div>
+      </aside>
     </div>
   );
 }

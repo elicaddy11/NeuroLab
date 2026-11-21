@@ -1,23 +1,42 @@
-import { useState } from "react";
-import {
-  SearchIcon,
-  GridIcon,
-  LayersIcon,
-  MaximizeIcon,
-} from "../icons";
+import { useEffect, useRef, useState } from "react";
+import { SearchIcon } from "../icons";
 import { NAV_SECTIONS, type SectionId } from "../../config/navigation";
+import { searchNeuroLab, type SearchResult } from "../../config/searchIndex";
 import "./Toolbar.css";
 
 interface ToolbarProps {
   active: SectionId;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  onSelectSearchResult: (result: SearchResult) => void;
 }
 
-export function Toolbar({ active }: ToolbarProps) {
-  const [view, setView] = useState<"grid" | "layers" | "max">("grid");
-  const [query, setQuery] = useState("");
+export function Toolbar({
+  active,
+  searchQuery,
+  onSearchQueryChange,
+  onSelectSearchResult,
+}: ToolbarProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const results = searchNeuroLab(searchQuery);
 
-  const section = NAV_SECTIONS.find((s) => s.id === active)!;
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
 
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
+
+  const section = NAV_SECTIONS.find((item) => item.id === active);
+  if (!section) {
+    return null;
+  }
   return (
     <header className="toolbar">
       <div className="context">
@@ -29,58 +48,55 @@ export function Toolbar({ active }: ToolbarProps) {
       <div className="searchWrap">
         <SearchIcon size={15} className="searchIcon" />
         <input
+          ref={searchInputRef}
           className="searchInput"
           type="text"
-          placeholder="Search structures, regions, references…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Global search"
+          placeholder="Search anatomy, systems, and concepts…"
+          value={searchQuery}
+          onChange={(event) => onSearchQueryChange(event.target.value)}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setSearchFocused(false);
+              searchInputRef.current?.blur();
+            } else if (event.key === "Enter" && results[0]) {
+              onSelectSearchResult(results[0]);
+              setSearchFocused(false);
+            }
+          }}
+          aria-label="Search all NeuroLab anatomy, systems, and concepts"
+          aria-autocomplete="list"
+          aria-expanded={searchFocused && searchQuery.trim().length > 0}
+          aria-controls="globalSearchResults"
         />
-        <span className="searchHint">⌘K</span>
-      </div>
-
-      <div className="viewControls" role="group" aria-label="View controls">
-        <button
-          className={`vcBtn ${view === "grid" ? "active" : ""}`}
-          onClick={() => setView("grid")}
-          aria-label="Grid view"
-          aria-pressed={view === "grid"}
-        >
-          <GridIcon size={15} />
-        </button>
-        <button
-          className={`vcBtn ${view === "layers" ? "active" : ""}`}
-          onClick={() => setView("layers")}
-          aria-label="Layers view"
-          aria-pressed={view === "layers"}
-        >
-          <LayersIcon size={15} />
-        </button>
-        <div className="vcDivider" />
-        <button
-          className={`vcBtn ${view === "max" ? "active" : ""}`}
-          onClick={() => setView("max")}
-          aria-label="Fullscreen"
-          aria-pressed={view === "max"}
-        >
-          <MaximizeIcon size={15} />
-        </button>
-      </div>
-
-      <div className="systemStatus">
-        <div className="statItem">
-          <span className="statDot" style={{ background: "var(--status-online)", boxShadow: "0 0 6px var(--status-online)" }} />
-          <span className="statLabel">SYS</span>
-          <span className="statValue">ONLINE</span>
-        </div>
-        <div className="statItem">
-          <span className="statLabel">RENDER</span>
-          <span className="statValue">60Hz</span>
-        </div>
-        <div className="statItem">
-          <span className="statLabel">MEM</span>
-          <span className="statValue">1.2GB</span>
-        </div>
+        <span className="searchHint">Ctrl/⌘K</span>
+        {searchFocused && searchQuery.trim() && (
+          <div className="searchResults" id="globalSearchResults" role="listbox" aria-label="Global search results">
+            {results.length > 0 ? results.map((result) => (
+              <button
+                type="button"
+                key={result.id}
+                className="searchResult"
+                role="option"
+                aria-selected="false"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onSelectSearchResult(result);
+                  setSearchFocused(false);
+                }}
+              >
+                <span className="searchResultCopy">
+                  <strong>{result.title}</strong>
+                  <span>{result.description}</span>
+                </span>
+                <span className="searchResultCategory">{result.category}</span>
+              </button>
+            )) : (
+              <p className="searchNoResults">No anatomy, systems, or concepts match.</p>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
