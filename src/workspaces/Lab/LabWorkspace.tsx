@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { DownloadIcon, LabIcon, PauseIcon, PlayIcon, RotateIcon } from "../../components/icons";
 import { ExperimentModels } from "./ExperimentModels";
-import { EXPERIMENT_TEMPLATES } from "./experimentData";
+import { EXPERIMENT_TEMPLATES, LEARNING_EXPERIMENTS } from "./experimentData";
 import "./LabWorkspace.css";
 
 const DURATIONS = [30, 60, 90];
@@ -77,7 +77,7 @@ export function LabWorkspace({
 
       <nav className="labModeTabs" aria-label="Lab workspace">
         <button type="button" className={mode === "models" ? "labModeActive" : ""} onClick={() => onModeChange("models")} aria-pressed={mode === "models"}>
-          Learning models <span>03</span>
+          Learning models <span>{String(LEARNING_EXPERIMENTS.length).padStart(2, "0")}</span>
         </button>
         <button type="button" className={mode === "protocols" ? "labModeActive" : ""} onClick={() => onModeChange("protocols")} aria-pressed={mode === "protocols"}>
           Protocol preview <span>LOCAL</span>

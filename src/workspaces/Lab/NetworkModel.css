@@ -1,0 +1,118 @@
+.networkModel {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+}
+
+.networkControls {
+  align-self: start;
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--border-faint);
+  background: rgba(4,8,13,.4);
+}
+.networkModelBadge { color: var(--accent-cyan); font: 7px var(--font-mono); line-height: 1.5; letter-spacing: .05em; }
+.networkRangeControl { display: grid; gap: 6px; }
+.networkRangeControl > span,
+.networkRangeControl > small { display: flex; justify-content: space-between; gap: 7px; color: var(--text-tertiary); font: 7px var(--font-mono); }
+.networkRangeControl b { color: var(--text-primary); font-size: 8px; font-weight: 400; white-space: nowrap; }
+.networkRangeControl input { width: 100%; margin: 2px 0; accent-color: var(--accent-cyan); }
+.networkRangeControl > small { color: var(--text-muted); }
+.networkActions { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+.networkRunButton,
+.networkResetButton { min-height: 34px; padding: 8px; font: 8px var(--font-mono); letter-spacing: .05em; cursor: pointer; }
+.networkRunButton { border: 1px solid rgba(34,211,238,.35); background: rgba(34,211,238,.08); color: var(--accent-cyan); }
+.networkRunButton:hover { border-color: var(--accent-cyan); background: rgba(34,211,238,.13); }
+.networkResetButton { border: 1px solid var(--border-subtle); background: transparent; color: var(--text-tertiary); }
+.networkResetButton:disabled { opacity: .4; cursor: default; }
+.networkControlNote { color: var(--text-muted); font-size: 8px; line-height: 1.5; }
+.networkRunSummary { display: grid; grid-template-columns: 1fr auto; gap: 7px; padding-top: 9px; border-top: 1px solid var(--border-faint); }
+.networkRunSummary span { color: var(--text-tertiary); font: 7px var(--font-mono); }
+.networkRunSummary strong { color: var(--accent-cyan); font: 8px var(--font-mono); font-weight: 400; }
+
+.networkOutput { display: grid; gap: 10px; min-width: 0; }
+.networkDiagramPanel,
+.networkSynapsePanel,
+.networkMethod { min-width: 0; border: 1px solid var(--border-faint); background: rgba(6,10,16,.38); }
+.networkDiagramPanel { display: grid; gap: 9px; padding: 11px; }
+.networkSectionTitle { display: flex; justify-content: space-between; gap: 8px; color: var(--text-secondary); font: 8px var(--font-mono); letter-spacing: .07em; }
+.networkSectionTitle span { color: var(--text-muted); }
+.networkDiagram { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.networkDiagramCell { display: flex; align-items: center; min-width: 0; }
+.networkNode { display: grid; flex: 1 1 auto; min-width: 0; gap: 5px; padding: 11px 9px; border: 1px solid var(--border-subtle); background: rgba(15,21,30,.8); }
+.networkNodeFired { border-color: rgba(34,211,238,.55); background: rgba(34,211,238,.08); }
+.networkNodeId { color: var(--accent-violet); font: 8px var(--font-mono); }
+.networkNode strong { color: var(--text-primary); font: 8px var(--font-mono); font-weight: 500; line-height: 1.4; }
+.networkNode small { color: var(--text-tertiary); font: 7px var(--font-mono); }
+.networkArrow { display: grid; flex: 0 0 62px; justify-items: center; gap: 3px; color: var(--text-muted); text-align: center; }
+.networkArrow > span { color: var(--text-tertiary); font: 20px/1 var(--font-mono); }
+.networkArrow small { font: 6px var(--font-mono); line-height: 1.35; overflow-wrap: anywhere; }
+.networkArrowActive > span,
+.networkArrowActive small:last-child { color: var(--accent-emerald); }
+.networkSynapseGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.networkSynapsePanel { display: grid; gap: 8px; padding: 10px; }
+.networkSynapseHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 7px; padding-bottom: 7px; border-bottom: 1px solid var(--border-faint); }
+.networkSynapseHeader > div { min-width: 0; }
+.networkSynapseHeader > div > span { color: var(--accent-violet); font: 7px var(--font-mono); }
+.networkSynapseHeader h4 { margin-top: 4px; color: var(--text-primary); font: 9px var(--font-mono); font-weight: 400; overflow-wrap: anywhere; }
+.networkSynapseStatus { flex: 0 0 auto; color: var(--text-tertiary); font: 6px var(--font-mono); }
+.networkSynapseReadouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.networkReadout { display: grid; gap: 3px; }
+.networkReadout span { color: var(--text-tertiary); font: 6px var(--font-mono); letter-spacing: .04em; }
+.networkReadout strong { color: var(--accent-cyan); font: 10px var(--font-mono); font-weight: 400; }
+.networkEmptyState { display: grid; min-height: 220px; place-items: center; padding: 20px; border: 1px solid var(--border-faint); color: var(--text-tertiary); font-size: 10px; line-height: 1.6; text-align: center; }
+
+.networkChart { min-width: 0; padding: 7px 8px 4px; border: 1px solid var(--border-faint); background: rgba(4,8,13,.3); }
+.networkChartTitle { display: flex; justify-content: space-between; gap: 7px; color: var(--text-secondary); font: 7px var(--font-mono); letter-spacing: .04em; }
+.networkChartTitle span { color: var(--text-muted); text-align: right; letter-spacing: 0; }
+.networkChart svg { display: block; width: 100%; height: auto; margin-top: 4px; overflow: visible; }
+.networkChartGrid { stroke: rgba(148,163,184,.1); stroke-width: 1; }
+.networkChartVerticalGrid { stroke-dasharray: 2 4; }
+.networkChartAxis { stroke: rgba(148,163,184,.24); stroke-width: 1; }
+.networkChartAxisLabel { fill: #627285; font: 7px var(--font-mono); }
+.networkChartTrace { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.networkTrace-cyan { stroke: #22d3ee; }
+.networkTrace-violet { stroke: #a78bfa; }
+.networkTrace-green { stroke: #34d399; }
+.networkTrace-amber { stroke: #fbbf24; }
+.networkTrace-rose { stroke: #fb7185; }
+.networkChartLegend { display: flex; flex-wrap: wrap; gap: 7px 12px; padding-top: 4px; color: var(--text-tertiary); font: 7px var(--font-mono); }
+.networkChartLegend span { display: inline-flex; align-items: center; gap: 4px; }
+.networkChartLegend i { width: 10px; border-top: 2px solid; }
+.networkChartLegend .networkTrace-cyan { border-color: #22d3ee; }
+.networkChartLegend .networkTrace-violet { border-color: #a78bfa; }
+.networkChartLegend .networkTrace-green { border-color: #34d399; }
+.networkChartTime { display: block; color: var(--text-muted); font: 6px var(--font-mono); text-align: center; }
+
+.networkMethod { display: grid; gap: 7px; padding: 11px; color: var(--text-tertiary); }
+.networkMethod > strong { color: var(--accent-amber); font: 7px var(--font-mono); letter-spacing: .06em; }
+.networkMethod p { font-size: 8px; line-height: 1.6; }
+.networkMethod a { color: var(--accent-cyan); text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .networkModel { grid-template-columns: 1fr; }
+  .networkControls { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .networkModelBadge,
+  .networkActions,
+  .networkControlNote,
+  .networkRunSummary { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .networkControls { grid-template-columns: 1fr; }
+  .networkModelBadge,
+  .networkActions,
+  .networkControlNote,
+  .networkRunSummary { grid-column: auto; }
+  .networkDiagram { grid-template-columns: 1fr; }
+  .networkDiagramCell { flex-direction: column; }
+  .networkDiagramCell:last-child { align-items: stretch; }
+  .networkArrow { min-height: 42px; }
+  .networkArrow > span { transform: rotate(90deg); }
+  .networkSynapseGrid { grid-template-columns: 1fr; }
+  .networkSectionTitle,
+  .networkChartTitle { flex-direction: column; }
+  .networkChartTitle span { text-align: left; }
+}

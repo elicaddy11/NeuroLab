@@ -1,0 +1,371 @@
+NEUROLAB_UPDATE.txt
+
+Phase 2A.3 — Scientific Validation Review and Anatomy Migration Plan
+
+Scope and verification
+- Read-only review of the current knowledge types, runtime validators, registry, Vitest cases, Brain records, Systems data, atlas mappings, and BodyParts3D attribution.
+- No application code or data was changed or migrated. No tests/build were run for this planning-only task.
+- Findings below describe code/data currently present; they do not constitute scientific verification.
+
+1. Validation policy audit
+
+ScientificClaim required fields:
+- id, subjectId, predicate, status, evidenceIds (array, which may be empty), and confidence { level, description }.
+- subjectId and optional objectId must reference registered entities; supplied evidenceIds must reference registered evidence.
+
+Optional claim fields:
+- objectId, primitive value, species[], experimentalContext[], limitations[].
+- There is no requirement that claims have any evidence, source, species, or experimental context.
+
+Scientific status and confidence:
+- Runtime validation restricts status to established, simplified, hypothetical, or simulated; it does not verify the truth or provenance represented by that status.
+- Confidence levels are high, moderate, limited, and unknown. A nonempty free-text description is required, but no rubric, calibration, or consistency check exists.
+- Status expresses the kind of content; confidence expresses confidence in it. Neither is derived from evidence.
+- There is no draft/unreviewed state. Consequently unsourced legacy prose cannot safely be assigned a claim status merely to pass validation.
+
+Relationships and evidence:
+- KnowledgeRelationship has subject/object IDs, a free-form predicate, directed/undirected flag, status, evidenceIds, confidence, and optional species/context/limitations.
+- Endpoint and supplied evidence references are checked. Empty evidenceIds are accepted. Predicates do not distinguish anatomical connectivity from functional association.
+- findRelatedEntities treats directed relationships as traversable in both directions. Query filters cover subject, object, predicate, and status.
+- Evidence has sourceIds, free-form evidenceType, confidence, and optional species/context/limitations. Empty sourceIds are accepted.
+- Species and experimental context have reusable structures on both evidence and claims/relationships. Validation checks only nonempty strings and known fields; it does not verify taxon identifiers, methods, or compatibility between evidence and claim.
+- Source title is required; authors/year/DOI/URL/publisher are optional. DOI/URL are checked only for nonempty strings, not validity.
+
+Verified weaknesses / misleading records currently possible:
+- A claim or relationship labeled established can have no evidence; evidence can have no sources.
+- Any nonempty predicate/evidenceType and almost any nonempty confidence description pass. No scientific review or source-quality verification occurs.
+- Duplicate IDs are rejected only within each record map, not across entity/claim/source/evidence namespaces. Semantically duplicate relationships under different IDs are not detected.
+- Registered records are stored and returned by reference; callers can mutate fields after validation and invalidate status, references, or metadata without revalidation.
+- No typed anatomical-versus-functional relation category; free-form predicates can blur direct pathways, conceptual associations, and system membership.
+- There is no source-to-claim assessment, evidence aggregation, source-type/provenance validation, publication/review state, or citation requirement conditional on status.
+- Unknown fields are not rejected consistently; free-text species/context can look authoritative without a controlled vocabulary.
+- TypeScript and passing tests validate software behavior, not scientific accuracy.
+
+Recommendations before migration:
+- Add a separate review/publication state or staging record so unreviewed legacy text does not need a scientific status.
+- Require traceable evidence/source links for reviewed scientific claims and relationships; define policy per status, including how educational simplifications and simulations are sourced.
+- Introduce controlled relationship categories (at minimum anatomical, functional/system-membership, and other/unspecified), with directionality documented.
+- Freeze/clone registered records or expose immutable snapshots; add tests for post-registration mutation.
+- Define a confidence rubric and species/context authority conventions. Do not interpret “unknown” as low confidence or as evidence.
+
+2. Anatomy migration audit
+
+There are 12 Brain entries with details, plus three tree-only grouping nodes (cerebral-cortex, subcortical-structures, posterior-fossa). Exact IDs below are the existing IDs to preserve. “Connections” are current strings from BrainRegionDetails.connections and do not establish direct anatomical pathways.
+
+For every entry: no scientific citation, source ID, evidence record, status, confidence, species, or experimental context is attached to the description/functions/connections/system associations. The BodyParts3D attribution documents the mesh asset only; it is not evidence for the prose.
+
+- frontal-lobe — Frontal lobe. Location: anterior hemisphere, in front of central sulcus. Description: lobe containing motor, premotor, and association areas, contributing to action, language, and goal-directed behavior. Functions: voluntary movement; planning/flexible behavior; dominant-hemisphere speech production. Systems: Executive control, Motor control, Sensory processing. Connections: prefrontal-cortex, parietal-lobe, temporal-lobe, basal-ganglia, thalamus. Mesh: surface group, FJ1833, FJ1834, FJ1787, FJ1788, FJ1744, FJ1745, FJ1800, FJ1801, FJ1793, FJ1794; selected gyri, not a complete lobe mask.
+- prefrontal-cortex — Prefrontal cortex. Location: association cortex at front of frontal lobes, anterior to premotor regions. Description: interconnected association areas using goals/context to guide thought/action in distributed networks. Functions: working memory/goal maintenance; planning/decision-making; cognitive control/social behavior. Systems: Executive control, Reward and motivation, Default mode network, Salience network. Connections: frontal-lobe, parietal-lobe, thalamus, basal-ganglia, hippocampus. Mesh: no dedicated segment; information-only.
+- parietal-lobe — Parietal lobe. Location: upper rear hemisphere, behind central sulcus. Description: integrates bodily sensation with spatial and multisensory information. Functions: touch/body sensation; spatial attention/body representation; multisensory integration. Systems: Sensory processing, Executive control, Motor control, Salience network. Connections: frontal-lobe, prefrontal-cortex, temporal-lobe, thalamus. Mesh: surface group, FJ1797, FJ1798, FJ1841, FJ1842, FJ1732, FJ1733, FJ1835, FJ1836; selected gyri/lobule, not a complete mask.
+- temporal-lobe — Temporal lobe. Location: lateral/inferior cortex beneath lateral sulcus. Description: auditory processing and recognition, with medial temporal structures supporting memory. Functions: auditory perception; dominant-hemisphere language comprehension; object/face recognition. Systems: Sensory processing, Memory, Threat and defensive processing, Default mode network. Connections: frontal-lobe, parietal-lobe, hippocampus, amygdala, thalamus. Mesh: surface group, FJ1789, FJ1790, FJ1746, FJ1747, FJ1783, FJ1784, FJ1785, FJ1786, FJ1837, FJ1838, FJ1839, FJ1840; selected gyri, not a complete lobe mask.
+- occipital-lobe — Occipital lobe. Location: posterior cerebral hemispheres. Description: early and higher-order visual processing. Functions: visual feature processing; motion/form perception; visual integration. Systems: Sensory processing, Salience network. Connections: temporal-lobe, parietal-lobe, thalamus. Mesh: surface, left/right FJ1791/FJ1792.
+- hippocampus — Hippocampus. Location: medial temporal lobe, along floor of each temporal horn. Description: paired structure important for forming/organizing episodic and spatial memories. Functions: episodic memory formation; relational/spatial learning; context-dependent retrieval. Systems: Memory, Default mode network, Threat and defensive processing. Connections: temporal-lobe, prefrontal-cortex, amygdala, thalamus. Mesh: deep, left/right FJ1759/FJ1807.
+- amygdala — Amygdala. Location: medial temporal lobe, anterior to hippocampal formation. Description: group of nuclei evaluating biologically relevant cues and coordinating learning/responses with other systems. Functions: emotional-significance learning; salient-event memory modulation; context-sensitive responses. Systems: Threat and defensive processing, Reward and motivation, Salience network, Memory. Connections: temporal-lobe, hippocampus, prefrontal-cortex, hypothalamus, thalamus. Mesh: deep, left/right FJ1753/FJ1829.
+- hypothalamus — Hypothalamus. Location: ventral diencephalon, below thalamus and adjacent to third ventricle. Description: links neural, endocrine, and autonomic regulation to internal bodily state. Functions: homeostasis; autonomic/endocrine coordination; sleep-wake/motivated behavior regulation. Systems: Reward and motivation, Threat and defensive processing, Salience network. Connections: thalamus, amygdala, hippocampus, brainstem. Mesh: deep, left/right FJ1760/FJ1808.
+- thalamus — Thalamus. Location: paired diencephalic structures flanking third ventricle. Description: nuclei relaying/transforming much sensory and motor information and participating in recurrent cortical communication. Functions: sensory relay (olfaction noted as exception); cortical-state regulation; motor/cognitive circuit coordination. Systems: Sensory processing, Motor control, Executive control. Connections: prefrontal-cortex, parietal-lobe, temporal-lobe, occipital-lobe, basal-ganglia, brainstem. Mesh: deep, left/right FJ1782/FJ1827.
+- basal-ganglia — Basal ganglia. Location: deep forebrain nuclei including striatum, globus pallidus, and associated nuclei. Description: interconnected nuclei participating in parallel loops with cortex/thalamus. Functions: action selection/movement; habit/reinforcement learning; cognitive/motivational control. Systems: Motor control, Reward and motivation, Executive control. Connections: prefrontal-cortex, frontal-lobe, thalamus, hypothalamus. Mesh: deep group, FJ1754, FJ1802, FJ1776, FJ1823, FJ1757, FJ1805 (caudate, putamina, globus pallidus); other nuclei omitted.
+- cerebellum — Cerebellum. Location: posterior fossa, behind pons/medulla and below occipital lobes. Description: compares intended/ongoing activity for adaptive coordination across motor/nonmotor domains. Functions: movement coordination/error correction; motor learning/timing; cognitive/affective contributions. Systems: Motor control, Executive control, Sensory processing. Connections: brainstem, thalamus, frontal-lobe, parietal-lobe. Mesh: deep, left/right FJ1781/FJ1830.
+- brainstem — Brainstem. Location: between diencephalon and spinal cord; comprises midbrain, pons, medulla. Description: pathways/nuclei essential for spinal communication and vital-function regulation. Functions: breathing/cardiovascular regulation; arousal/sleep-wake; cranial-nerve functions and ascending/descending pathways. Systems: Motor control, Sensory processing, Threat and defensive processing. Connections: thalamus, hypothalamus, cerebellum. Mesh: deep grouped segments FJ1770, FJ1817, FJ1775, FJ1822, FJ1769, FJ1831, FJ1774, FJ1821 (midbrain, pons, medulla, cerebral peduncles).
+
+Cross-file inconsistencies and dependencies:
+- BrainRegionDetails stores connections as string arrays; SystemsWorkspace separately uses NETWORK_EDGES (20 schematic links), and ActivityWorkspace reuses those edges. The Systems UI explicitly says links are conceptual, not measured/direct structural connectivity.
+- Connection lists are not consistently reciprocal; e.g., frontal-lobe lists thalamus but thalamus omits frontal-lobe; occipital-lobe lists parietal-lobe but parietal-lobe omits occipital-lobe; hypothalamus lists hippocampus/thalamus while those entries omit hypothalamus.
+- Region system labels duplicate SystemsData.regions membership and disagree: Brain lists Sensory processing for frontal-lobe, Motor control for parietal-lobe, Threat for temporal-lobe, Salience for occipital-lobe, Memory for amygdala, Salience for hypothalamus, Executive control for basal-ganglia, Executive/Sensory for cerebellum, and Sensory for brainstem; corresponding SystemsData membership omits these region IDs.
+- Brain UI and the 3D atlas depend on stable IDs: BRAIN_MESH_REGION_BY_ID, BRAIN_DEEP_REGION_IDS, click handlers, region selection, and mesh root object names use them. RegionTree also depends on the nested BRAIN_REGIONS shape and labels.
+- Three parent rows have no details and are organizational nodes; current brainRegionToKnowledgeEntity maps any BrainRegion to anatomical-structure, so it would misclassify these headings if applied indiscriminately.
+- Atlas attribution is BodyParts3D v4.0, CC BY 4.0; it models an adult human male. Brain visualization maps selected source meshes into 11 display groups; cortical lobe groups are incomplete, prefrontal cortex has no dedicated mesh, and basal ganglia coverage omits other nuclei.
+
+3. Proposed mapping and staged migration
+
+Mapping:
+- Create one KnowledgeEntity per detailed Brain entry, preserving the exact existing ID; preferred name = label, abbreviation = abbr. Do not treat mesh availability as a condition for entity existence.
+- Keep the three parent tree rows as presentation hierarchy or explicitly typed categories; do not classify them as anatomical structures by default.
+- Keep location, descriptions, and function bullets as legacy content until each is reviewed and supported. Do not assign established/simplified solely to satisfy the required status field. Add an unreviewed/draft workflow or hold such text outside published ScientificClaim records.
+- Map anatomical hierarchy, functional/system membership, and any anatomical pathway only as distinct, typed relationships after their meanings and evidence are resolved. Preserve current connection/system arrays through compatibility adapters during transition; do not union conflicting lists or infer direct/directed pathways.
+- Keep mesh IDs, sourceComponents, surface/deep flags, colors, coverageNote, model URL, and GLB mapping in the visualization layer (e.g. existing brainVisualizationData.ts or a later presentation-only atlas mapping module), keyed by preserved entity IDs.
+- Link BodyParts3D as evidence for atlas segment identity/coverage only. It does not substantiate the BrainRegion descriptions, functions, or system/connection lists.
+
+Pilot recommendation: occipital-lobe + prefrontal-cortex.
+- Occipital lobe tests migration of an existing mesh-backed entity and preservation of its bilateral atlas mapping.
+- Prefrontal cortex tests that an information-only structure remains available without a mesh and exposes existing details/relationships.
+- Initially migrate identity/name/abbreviation only in a shadow registry. Add no scientific claims until separately sourced and reviewed. Keep legacy Brain UI as the active read path during the pilot.
+
+Stages, compatibility, validation, rollback:
+1. Before migration, decide review state/status policy, claim evidence requirements, typed relation categories, and resolution policy for duplicate/inconsistent membership.
+2. Build an inventory/export and checksums for all old region IDs, labels, details, and mesh mappings; add fixtures that compare the full source inventory.
+3. Pilot the two entities in a shadow registry via adapter; test legacy lookups, search, selected-region focus, mesh selection, and info-only PFC behavior. Do not change rendering.
+4. Curate claim/source/evidence records with source-to-claim links and honest species/context/confidence; leave unsupported legacy text clearly staged rather than promoted.
+5. Migrate remaining 10 detailed entities in batches; review parent categories and relationship records separately.
+6. Switch consumers only behind adapters after parity tests pass; retain old data/export until a release has verified parity. Roll back by restoring legacy read path and preserving IDs; do not delete legacy data in the same migration.
+
+Risks and unresolved decisions
+- No sources currently support the prose claims, so a fully evidence-backed prose migration cannot proceed from repository contents alone.
+- Which authoritative sources and scientific reviewers will curate claims, and how should conflicting evidence be recorded?
+- Should reviewed simplified educational claims require an underlying source plus an explicit simplification note?
+- Should missing species/context mean unknown, unspecified, or not applicable? Current optional fields cannot distinguish these cases.
+- How should system membership conflicts between BrainRegion.details.systems and SystemsData.regions be adjudicated?
+- Should reciprocal connection entries be canonicalized, and what typed meaning (if any) do they represent?
+- Should the current status model gain a separate draft/review state before any legacy prose enters the registry?
+
+Recommended next step
+- Obtain approval for the review/status policy, evidence requirements, relationship taxonomy, and system-membership reconciliation. Then implement only the identity-only shadow pilot; do not switch UI reads or migrate all 12 until pilot parity and evidence review are approved.
+
+
+Phase 2B — External Data Source Investigation
+
+Scope and verification
+- Investigated official Allen Institute/Allen Brain Map, BrainGlobe, and EBRAINS/Jülich-Brain documentation, and inspected NeuroLab's current Brain viewer, atlas mapping, build script, and existing BodyParts3D attribution.
+- No application code or scientific data was changed, migrated, or installed. This is a source review and read-only proof of concept, not a production integration.
+- License notes below summarize the cited terms; they are not legal advice. Check terms for the exact dataset/version and NeuroLab's distribution model before use.
+
+Resource comparison
+
+1. Allen Brain Atlas / Allen Brain Map
+- Data/API: REST/RMA endpoints and AllenSDK expose structure ontologies, reference spaces, structure trees, expression data, and downloadable annotation/template volumes. The adult mouse atlas is the clearest 3D anatomical starting point. The Allen Human Brain Atlas is a distinct resource and should not be confused with the adult mouse CCF; the latter is not a human atlas.
+- Coverage/3D: adult mouse CCF structure tree and 3D integer-labeled annotation volumes at multiple resolutions. Allen also provides other species/stages/resources, but coverage and representation vary by dataset. The Human Brain Atlas includes adult human expression data, not an equivalent human whole-brain CCF parcellation.
+- Use/licensing: Allen Terms of Use permit use, copying, display, and derivatives for research or other noncommercial purposes, require attribution, and restrict commercial redistribution absent written permission. The citation policy specifically requires clear, discoverable dataset attribution/link on the same page as displayed data. A free educational app is not automatically determined to be noncommercial by this review; obtain legal/product approval.
+- Reliability/limits: useful, structured reference ontology and experimental datasets, but atlas labels/reference spaces are model-specific. A reference label does not establish a functional claim, and mouse anatomy should not be presented as human anatomy.
+
+2. Allen Mouse Brain Connectivity Atlas
+- Data/API: AllenSDK and Brain Map APIs provide metadata and experimental AAV projection data, including structure-level projection summaries and 3D projection-density, injection, and data-mask volumes.
+- Coverage/3D: mouse experiments registered to the adult mouse CCF; volumes are available at several voxel resolutions.
+- Use/licensing: Allen terms and citation requirements apply; cite the specific experiment/dataset and source atlas where used.
+- Reliability/limits: valuable evidence for tracer observations in particular experiments, not a complete synaptic connectome or a universal statement that every region pair is connected. Respect injection coverage, experimental design, and the valid-data mask; do not convert schematic Systems edges into measured pathways.
+
+3. BrainGlobe Atlas API and Atlas Assets
+- Data/API: BrainGlobe Atlas API is a Python library that gives a common download/access interface across independently produced atlases; it is not itself a single hosted atlas or a browser JavaScript API. Atlas objects expose reference/template, annotation, structure metadata, and mesh access (including mesh generation from structures).
+- Coverage/3D: the official current catalog includes multiple mouse ages/modalities, adult mouse Allen CCF at 10/25/50/100 µm, adult human MRI atlas at 500 µm, rat, zebrafish, and developmental atlases. Availability and versions change; choose the specific atlas, age, modality, resolution, and ontology deliberately. Annotation volumes and structure meshes support 3D workflows.
+- Use/licensing: the BrainGlobe software repository is BSD-3-Clause; that licenses the software, not every dataset it downloads. The Atlas Assets specification requires provenance/licensing/references in asset descriptions and supports citations/manifests; inspect the actual atlas asset's license and attribution before bundling or redistributing it.
+- Reliability/limits: useful as an ingestion/normalization layer, not as evidence that different atlases are anatomically interchangeable. Coordinate spaces, ages, modalities, labels, and annotation completeness differ. The Allen adult mouse reference is STPT-based; not every modality or region is equally suited to it.
+
+4. EBRAINS siibra / Jülich-Brain
+- Data/API: siibra-api is an HTTP API for querying atlas parcellations, regions, templates, and linked regional datasets; siibra-python provides programmatic access. Jülich-Brain provides human probabilistic cytoarchitectonic maps and linked multimodal data.
+- Coverage/3D: human atlas resources span MNI, fsaverage surface, and BigBrain histological reference spaces; BigBrain is a 20 µm 3D human model. EBRAINS' viewer describes human, macaque, rat, and mouse atlas options. Both volumetric and surface visualization are supported.
+- Use/licensing: EBRAINS describes its infrastructure/tools as open/free, but that is not a blanket license for every linked dataset. Verify licensing, citation, access, and redistribution terms for each map/feature.
+- Reliability/limits: probabilistic maps represent inter-individual variability, not a single exact boundary for every person. Reference-space transforms and dataset/map versions must be retained. Some linked datasets may be metadata-only or have separate access/terms.
+
+Recommended source strategy
+- There is no one atlas appropriate for every NeuroLab species and use. For a first machine-readable 3D anatomy pilot, use the adult mouse Allen CCF/Reference Atlas as the primary reference space, accessed through BrainGlobe for ingestion and its standard atlas interface. This recommendation is conditional on confirming the noncommercial/license fit and must be explicitly labeled mouse.
+- Do not replace NeuroLab's existing human BodyParts3D view with mouse geometry. Keep BodyParts3D v4.0 as the current human presentation asset under its existing CC BY 4.0 attribution. For human probabilistic cytoarchitecture, evaluate Jülich-Brain/EBRAINS as a supplement after per-map rights and coordinate-space fit are reviewed. BrainGlobe's adult human listing may also be evaluated, but is a separate atlas, not an automatic crosswalk.
+- Use Allen Connectivity only as an experimental evidence source for specific mouse tracer observations. Consider EBRAINS/Jülich-Brain for human multimodal/probabilistic context. Do not mix them into generic "connection" edges without preserving experimental evidence and source context.
+
+Fit to NeuroLab and proposed integration
+- Current verified path: BrainVisualization loads /models/brain/bodyparts3d-atlas.glb; brainVisualizationData.ts maps legacy region IDs to GLB object names, colors, mesh IDs, and coverage notes; click handling looks up the corresponding legacy BrainRegion. scripts/build-brain-atlas.mjs builds the bundled GLB from BodyParts3D OBJ segments. The existing model has partial grouped lobe coverage and no dedicated prefrontal mesh.
+- Keep scientific identity separate from atlas/presentation records. Add source/atlas metadata (provider, dataset and release, species/strain/age/sex when specified, reference space, ontology version, modality, resolution, terms, citation, and asset checksum) outside the core entity's scientific claims. Keep large volumes and meshes as versioned external/static assets, not registry records.
+- Store provider structure IDs as external identifiers and maintain a reviewed crosswalk to NeuroLab's stable IDs. Do not replace existing Brain IDs or equate matching names across species/ontologies. The current core types support entities, sources, evidence, and claims but do not yet define structured atlas releases, coordinate spaces, or external-identifier crosswalks; those are an explicit integration gap, not implemented here.
+- Import hierarchy as typed anatomical part-of relationships with source/version provenance. Keep experimental projection evidence separate from anatomical containment, functional association, and the schematic Systems/Activity edges.
+- For visualization, preprocess selected annotation masks into versioned mesh assets and map their atlas labels to reviewed internal IDs. Preserve the existing BodyParts3D asset and viewer path during a pilot; external API access should not be required for ordinary page rendering. Pin versions and retain attribution locally with every packaged asset.
+
+Small proof of concept (read-only)
+- Verified live request: GET https://api.brain-map.org/api/v2/data/Structure/315.json returned one Allen record: id 315, name/acronym Isocortex, atlas_id 746, graph_id 1, parent_structure_id 695, and structure_id_path /997/8/567/688/695/315/.
+- A candidate ingestion record can preserve these as provider metadata, e.g. provider=Allen Brain Map; dataset/reference=adult mouse CCF; external structure ID=315; parent external ID=695; ontology path as returned. This demonstrates that external ontology metadata can be retrieved and normalized without copying atlas data or changing NeuroLab.
+- Do not map this record to NeuroLab's existing "Cerebral cortex" identity based on name alone: species, ontology granularity, and semantics need reviewed crosswalk evidence. This proof of concept was a live API verification only, not an application adapter, and no existing records were changed.
+
+Risks, limitations, and approvals
+- Main blocking decision: confirm whether NeuroLab's distribution and hosting are noncommercial under Allen's current Terms of Use, or secure written permission. Also confirm redistribution rules for each specific BrainGlobe atlas asset and EBRAINS map; software/package licenses alone are insufficient.
+- Decide whether the first external atlas pilot is explicitly mouse-only (recommended) while human visualization remains BodyParts3D, and approve a separate human-source evaluation.
+- Before production, add a versioned atlas/source catalog and external-ID crosswalk format, define coordinate-transform/provenance handling, capture source citations in the UI, and validate mesh/annotation alignment. No existing application code currently performs these tasks.
+- API availability, terms, datasets, and atlas releases can change. Pin source versions and checksums; avoid relying on live third-party requests for critical rendering. A data source's scientific reputation does not itself verify every claim NeuroLab might make from it.
+
+Official sources checked
+- Allen Terms of Use: https://alleninstitute.org/legal/terms-of-use/
+- Allen Citation Policy: https://alleninstitute.org/legal/citation-policy/
+- Allen Structure API live response: https://api.brain-map.org/api/v2/data/Structure/315.json
+- AllenSDK Reference Space: https://allensdk.readthedocs.io/en/latest/reference_space.html
+- AllenSDK Mouse Connectivity: https://allensdk.readthedocs.io/en/latest/connectivity.html
+- Allen Brain Map Connectivity API documentation: https://brain-map.org/support/documentation/api-allen-brain-connectivity-atlas
+- BrainGlobe Atlas API/catalog: https://brainglobe.info/documentation/brainglobe-atlasapi/
+- BrainGlobe atlas details: https://brainglobe.info/documentation/brainglobe-atlasapi/usage/atlas-details.html
+- BrainGlobe Atlas API software license: https://github.com/brainglobe/brainglobe-atlasapi/blob/main/LICENSE
+- Atlas Assets metadata/manifest specification: https://atlas-assets.readthedocs.io/en/latest/atlas.html and https://atlas-assets.readthedocs.io/en/latest/annotation_set.html
+- EBRAINS siibra-api: https://www.ebrains.eu/data-tools-services/tools/siibra-api
+- siibra-python atlas concepts/reference spaces: https://siibra-python.readthedocs.io/en/latest/concepts.html
+- Jülich-Brain Atlas: https://julich-brain-atlas.de/
+- Existing NeuroLab BodyParts3D license/attribution: public/models/brain/ATTRIBUTION.txt
+
+Tests and results
+- No tests or build were run: this phase changed only this report and required no application changes.
+- Verified successfully: official documentation retrieval, current NeuroLab viewer/build/mapping inspection, and one live Allen Structure API response. No dependencies were installed.
+- Unresolved: legal interpretation for NeuroLab's business/distribution model and exact dataset-specific rights for the candidate BrainGlobe/EBRAINS assets.
+
+Recommended next step
+- Obtain product/legal approval for the Allen terms and confirm mouse-versus-human scope. Then, if approved, build a non-rendering, version-pinned atlas catalog/crosswalk proof of concept with one external structure and licensing/citation metadata. Keep it separate from current entities and visualization until identity mapping and asset rights are reviewed.
+
+
+Phase 2C — Connect Brain Viewer to Knowledge System
+
+Work completed
+- Added a Brain-specific adapter that registers detailed legacy Brain structures as knowledge entities using the existing stable IDs, preferred labels, and abbreviations. Organizational tree headings without details are not registered as anatomical entities.
+- Connected the Brain structure profile to retrieve its entity identity from the knowledge registry when selected. Existing descriptive text, location, function bullets, connections, and system tags remain supplied by legacy Brain data because those have not been curated/migrated as claims or relationships.
+- Added mesh/knowledge coverage reporting and focused tests. Kept the BodyParts3D asset, rendering code, IDs, selection path, and existing workspaces intact. No scientific content or external atlas mapping was added.
+
+Files created/modified
+- Created `src/knowledge/adapters/brainKnowledgeAdapter.ts`.
+- Created `src/knowledge/adapters/brainKnowledgeAdapter.test.ts`.
+- Modified `src/knowledge/adapters/index.ts` to export the adapter.
+- Modified `src/workspaces/Brain/BrainWorkspace.tsx` to resolve selected entity names through the knowledge adapter while retaining legacy details.
+- Updated `NEUROLAB_UPDATE.txt`.
+
+Mapping coverage and architecture decisions
+- Verified exact-ID coverage: all 11 entries in `BRAIN_MESH_REGIONS` map to knowledge entities; there are no mesh IDs without a record.
+- There are 12 detailed legacy anatomical entries. `prefrontal-cortex` is registered and selectable as information-only and is the sole detailed entity without a dedicated mesh. No mesh was fabricated for it.
+- The three organizational nodes (`cerebral-cortex`, `subcortical-structures`, `posterior-fossa`) retain existing tree/lookup compatibility but are excluded from the anatomy registry.
+- The adapter uses the existing legacy Brain ID namespace as entity IDs. Visualization colors, BodyParts3D segment IDs, coverage notes, GLB path, and mesh grouping remain outside knowledge entities.
+- This is an identity-level connection, not a full data migration. Since the knowledge records currently have no claims, evidence, or relationships, the profile continues to display legacy details. Existing “connected structures” and “associated systems” are not asserted as registry relationships.
+
+Tests and build results
+- `npm test`: passed, 3 test files and 20 tests; includes same-ID mesh/entity mapping, selected-region identity/detail retrieval, information-only PFC, unmatched/missing selection handling, and legacy lookup/model URL compatibility.
+- `npm run build`: passed (`tsc -b` and Vite production build). Vite emitted the existing large-chunk advisory (main JS bundle about 1.22 MB); build completed successfully.
+- No browser-driven interaction or visual regression test was run. Existing renderer behavior is preserved by not changing BrainVisualization, mesh data, or asset pipeline, but runtime rendering/interaction was not independently exercised in this task.
+
+Limitations and next steps
+- Scientific details remain sourced from legacy `brainData.ts`; do not present this registry hookup as evidence-backed prose migration.
+- Registry entity records currently contain identity only; scientific claims, sources, evidence, and typed relationships need curation and an approved migration policy before replacing legacy content.
+- External atlases should later enter through separate versioned atlas/source metadata and reviewed crosswalks, with species/reference-space distinctions preserved. Do not map external IDs by matching names alone or replace the BodyParts3D viewer.
+- Next: review the identity-only mapping and then, as a separate approved task, design source-backed claims/relationship migration for a small pilot without switching the renderer.
+
+
+Phase 2D — Pre-migration architecture gap identified
+- Inspection before migration found that ScientificClaim has scientific status but no review status/provenance; the registry also permits claims and evidence with empty evidence/source references. Confidence descriptions are unrestricted prose.
+- The architecture has no source-to-claim assessment workflow. No claim may honestly be labeled expert-reviewed using the current fields.
+- Relationship records use free-form predicates and do not categorize anatomical versus functional semantics.
+- This gap was recorded before creating any Phase 2D knowledge records. The pilot will add the smallest explicit claim review-state field and validate it, use source-linked evidence for each migrated claim, and leave all pilot claims marked `source-checked` (not expert-reviewed). Relationship predicates will be explicitly named and accompanied by cited evidence/limitations; no broader taxonomy is introduced in this pilot.
+
+Phase 2D — Evidence-Backed Knowledge Pilot
+
+Work completed
+- Migrated only the occipital lobe's educational explanation, supported functions, cognitive contributions, and two visual-pathway relationships into the existing registry.
+- Preserved the `occipital-lobe` identity, BodyParts3D mesh IDs, colors, coverage metadata, and current renderer. Legacy profile data remains in place and is used as fallback for fields/regions without structured records.
+- Connected the existing profile panel to structured beginner/advanced claims, function claims, cognitive-contribution claims, pathway relationships, and bibliography. The panel marks the claims “source-checked · not expert-reviewed”; citations link to DOI records.
+- Added bibliographic container/volume/issue/pages fields to the existing KnowledgeSource and a claim-query method to the existing registry. No second registry or duplicate claim/evidence model was introduced.
+
+Pre-migration findings and validation decisions
+- Before creating migrated records, audit found no review state and no requirement that scientific claims contain evidence. This gap is documented above.
+- Added required `reviewStatus` to claims and relationships: `unreviewed`, `source-checked`, or `expert-reviewed`. Expert-reviewed records require reviewer and date metadata. These pilot records are `source-checked` only; no domain expert review is claimed.
+- Registry validation still permits empty evidence/source lists in general for compatibility with existing architecture. Every migrated pilot claim and relationship has nonempty evidence references; each evidence record has a source reference. Focused tests enforce those properties for this data.
+- Predicates remain strings, not a global typed relation ontology. Pilot relation names and limitations distinguish pathway-level association from direct projection assertions.
+- Confidence is `moderate`, with record-specific descriptions; scientific status is separate from review status.
+
+Migrated claims and relationships
+- `beginner-explanation` — status `simplified`; explains that occipital visual cortical areas work within a broader visual network. Evidence: Grill-Spector & Malach (2004), Wandell et al. (2007). Human context.
+- `advanced-explanation` — status `established`; summarizes multiple human retinotopic maps around occipital regions and posterior parietal cortex, while stating some functional assignments/relationships remain hypotheses. Evidence: Wandell et al. (2007). Human context.
+- `function` — status `established`; visual-field mapping and functional specialization/hierarchical processing claims. Evidence: Wandell et al. (2007); Grill-Spector & Malach (2004). Human context.
+- `cognitive-contribution` — status `established`; visual perception and distributed visuospatial processing contributions, including spatial working memory, visually guided action, and navigation, with a limitation that these are not functions of occipital lobe alone. Evidence: Grill-Spector & Malach (2004); Kravitz et al. (2011).
+- Relationships — status `established`, review status `source-checked`: `dorsal-visual-pathway-extends-to` parietal lobe and `ventral-visual-pathway-extends-to` temporal lobe. Evidence: Kravitz et al. (2011). Limitations state that these are pathway-level associations, not direct projections between every part of each lobe.
+- All eight scientific statements (six claims and two relationships) carry evidence links and `source-checked` status. The beginner explanation is explicitly marked `simplified`; the others are `established` at the summarized level.
+
+Scientific sources verified
+- Grill-Spector K, Malach R. (2004). “The human visual cortex.” Annual Review of Neuroscience, 27, 649–677. DOI: https://doi.org/10.1146/annurev.neuro.27.070203.144220. Europe PMC metadata/abstract confirms review of human visual-cortex organization, visual perception, functional specialization, and hierarchical processing.
+- Wandell BA, Dumoulin SO, Brewer AA. (2007). “Visual field maps in human cortex.” Neuron, 56(2), 366–383. DOI: https://doi.org/10.1016/j.neuron.2007.10.012. Europe PMC metadata/abstract identifies multiple medial/lateral/ventral/dorsal occipital and posterior parietal maps, and notes that additional maps and functional relationships remain under investigation.
+- Kravitz DJ, Saleem KS, Baker CI, Mishkin M. (2011). “A new neural framework for visuospatial processing.” Nature Reviews Neuroscience, 12(4), 217–230. DOI: https://doi.org/10.1038/nrn3008. Its abstract and NCBI PMC author-manuscript text describe occipitotemporal and occipitoparietal visual pathways and distributed visuospatial functions. The article distinguishes primate pathway evidence and human pathway observations; claims are limited to pathway-level summaries.
+- Metadata/abstract checks: Europe PMC REST records for PMIDs 15217346 and 17964252 and DOI 10.1038/nrn3008; full text of PMC3388718 retrieved via NCBI BioC/PMC author manuscript. The primary papers were not independently reproduced or reanalyzed.
+
+Files created/modified
+- Created `src/knowledge/anatomy/occipitalLobe.ts` with stable source/evidence/claim/relationship records.
+- Modified `src/knowledge/core/types.ts`, `src/knowledge/evidence/sources.ts`, `src/knowledge/registry/validation.ts`, and `src/knowledge/registry/KnowledgeRegistry.ts` for review status, bibliographic metadata, and claim queries.
+- Modified `src/knowledge/adapters/brainKnowledgeAdapter.ts` to register pilot records and return claims, relationships, evidence, and sources in the existing Brain knowledge profile.
+- Modified `src/workspaces/Brain/BrainWorkspace.tsx` to show structured pilot content, status labels, related structures, and source links with legacy fallback.
+- Modified `src/knowledge/registry/KnowledgeRegistry.test.ts` and `src/knowledge/adapters/brainKnowledgeAdapter.test.ts`.
+- Updated `NEUROLAB_UPDATE.txt`.
+
+Tests and build results
+- `npm test`: passed, 3 test files / 25 tests. Tests cover claim queries, review status validation, migration status/evidence/source references, relationship references, legacy fallback, and stable Brain IDs.
+- `npm run build`: passed (`tsc -b` and Vite production build). Vite emitted a large-chunk advisory; the main JavaScript chunk is about 1.23 MB.
+- No browser-based visual/interaction regression test was run; UI integration was type-checked and production-built.
+
+Limitations and next steps
+- “Source-checked” means the bibliographic metadata and cited review material were checked for this pilot. It is not expert review, a systematic review, or independent scientific verification. All records remain pending domain-expert review.
+- General registry validation still accepts claims without evidence and evidence without sources; future migration should decide whether to enforce conditional evidence requirements by status. Confidence remains descriptive and uncalibrated.
+- The legacy occipital connection to thalamus and system membership remain in legacy content, not migrated as supported relationships. The new pathway records replace the legacy connected-structure list in the occipital profile; the legacy array is retained and other regions continue to use legacy connections.
+- Beginner/advanced text and visual system associations are not all independently validated against primary studies; displayed claim citations correspond to the registered evidence.
+- Next: obtain neuroscience review of this pilot and its citations/status labels, then resolve review/evidence policy and relationship taxonomy before migrating another region. Do not batch-migrate remaining structures yet.
+
+Phase 3A — First Biological Neuron Model
+
+Implemented
+- Added an independent, typed Hodgkin-Huxley engine in `src/simulation/neuron/hodgkinHuxley.ts`; no UI dependencies.
+- Integrates a single isopotential squid-axon compartment with classical voltage-dependent m, h, n gates. Uses outward-positive ionic currents: `INa=gNa*m^3*h*(V-ENa)`, `IK=gK*n^4*(V-EK)`, `IL=gL*(V-EL)`, and `Cm*dV/dt=Iapp-INa-IK-IL`.
+- Units: voltage mV, time ms, capacitance μF/cm², conductance mS/cm², current density μA/cm². Defaults: V0 −65 mV, Cm 1 μF/cm², gNa 120, gK 36, gL 0.3 mS/cm², ENa +50, EK −77, EL −54.3 mV, and temperature 6.3 °C. Gates initialize at steady state for V0.
+- Uses fixed-step fourth-order Runge-Kutta (default 0.01 ms; maximum step is reduced as temperature increases), splits integration at pulse edges, and scales gate rates with Q10=3. Input/state checks throw explicit errors; simulation-step count is capped.
+- Added the computed model as a fourth choice in the existing Lab Learning models. Controls adjust pulse amplitude/duration, Na/K maximum conductance, and temperature; charts show computed voltage, ionic/applied currents, and m/h/n gates. Activity's synthetic traces and the three conceptual Lab models remain unchanged.
+
+Scientific basis and limits
+- Hodgkin AL, Huxley AF (1952), “A quantitative description of membrane current and its application to conduction and excitation in nerve,” Journal of Physiology 117(4):500–544, DOI https://doi.org/10.1113/jphysiol.1952.sp004764 (Europe PMC bibliographic record: PMID 12991237).
+- Checked NEURON's canonical squid mechanism at https://github.com/neuronsimulator/nrn/blob/master/src/nrnoc/hh.mod for the absolute-voltage convention, squid conductances, rate equations, vtrap singularity handling, and Q10. Checked its explicit example at https://github.com/neuronsimulator/nrn/blob/master/share/examples/nrniv/nmodl/hh1.mod for a parameterized comparison.
+- Reversal-potential variants differ slightly between implementations: this app uses +50/−77/−54.3 mV (Na/K/leak); the NEURON `hh1.mod` example uses EK=−77.5 mV. Do not interpret outputs as an exact replica of every HH implementation. The selected −77 mV set leaves a small resting drift (under 0.1 mV over the tested 20 ms); resting gates are initialized at steady state, but voltage is not artificially clamped.
+- This is a classical single-compartment squid-axon model, not a complete human neuron. It does not model morphology, spatial propagation, synapses, or many cellular mechanisms; it is neither a physiological recording nor a clinical predictor.
+
+Files created/modified for Phase 3A
+- Created `src/simulation/neuron/hodgkinHuxley.ts` and `src/simulation/neuron/hodgkinHuxley.test.ts`.
+- Created `src/workspaces/Lab/HodgkinHuxleyModel.tsx`; modified `src/workspaces/Lab/ExperimentModels.tsx`, `src/workspaces/Lab/ExperimentModels.css`, and `src/workspaces/Lab/experimentData.ts`.
+- Updated this handoff. The required build also refreshed tracked Vite output in `dist/` and `tsconfig.tsbuildinfo`; those are generated artifacts. Other pre-existing worktree changes (package manifests, Brain workspace, and `src/knowledge/`) were not changed for this phase.
+
+Verification
+- `npm test`: passed, 4 test files / 33 tests (8 HH tests plus the existing 25). HH tests cover rest stability, action-potential peak and pulse timing, current directions, bounded gates and singular rates, integration-step refinement, repeatability, stimulus/conductance effects, UI-control extremes, and invalid inputs.
+- `npm run build`: passed TypeScript and Vite production build (658 modules). Vite reports the existing large-chunk advisory; the main JavaScript bundle is about 1.24 MB uncompressed (about 343 KB gzip).
+- Automated browser interaction/visual regression was not run; UI integration is type-checked and the standalone engine is tested. The HH output was compared against expected classical qualitative behavior and reference equations, not against an independently executed NEURON numerical trace.
+
+Recommended next stage
+- Add a browser-level interaction check when the project adopts a DOM test environment; compare a documented benchmark trace against an independent simulator/reference implementation before making stronger numerical validation claims. Keep future multi-compartment, synaptic, or population models separate from this single-compartment engine.
+
+Phase 3B — Biological Synaptic Transmission
+
+Implemented
+- Added an independent deterministic synapse engine at `src/simulation/synapse/chemicalSynapse.ts`. A supplied presynaptic terminal-voltage waveform drives a first-order, voltage-dependent CaV activation fraction and an expected single-channel calcium current. Inward current feeds a point-source local-calcium estimate; intracellular calcium relaxes toward that estimate through a first-order clearance approximation.
+- Calcium-dependent fusion uses a Hill relationship and an expected fusion rate scaled by a finite one-site vesicle pool. Output samples include time, imposed terminal voltage, channel activation, signed calcium current, local calcium, release probability, expected released vesicles, and available vesicles. Integration uses RK4 with waveform-knot-aware steps.
+- Added `src/simulation/synapse/hodgkinHuxleyTerminalInput.ts` as an explicit adapter from the existing single-compartment Hodgkin–Huxley voltage trace. This is an imposed terminal input; it does not model spatial propagation along an axon.
+- Added the synapse model as a fifth option in the existing Lab model picker. Users can run the HH-derived terminal waveform and adjust HH stimulus, channel conductance/activation threshold, sensor distance, calcium clearance, Hill coefficient, and effective calcium half-activation. Charts display computed model values; no prerecorded trace is used. Existing Brain, Activity, protocol preview, conceptual Lab models, and HH model remain in place.
+
+Scientific basis and limits
+- Scarnati MS et al. (2020), “Presynaptic Calcium Channel Open Probability and Changes in Calcium Influx Throughout the Action Potential Determined Using AP-Waveforms,” *Frontiers in Synaptic Neuroscience* 12:17, DOI https://doi.org/10.3389/fnsyn.2020.00017. The source studies P8–P12 mouse calyx of Held and supports the cited CaV activation onset and example values (43 mV calcium reversal, 2.76 pS single-channel conductance, 220 μm²/s diffusion) and point-source local-calcium method. These are preparation-specific, not universal constants.
+- Matveev V, Bertram R, Sherman A (2011), DOI https://doi.org/10.1016/j.brainres.2011.05.011, supports preparation-dependent calcium cooperativity; it does not establish one universal release Hill coefficient.
+- The linear activation curve and its saturation voltage, activation/clearance time constants, default sensor distance, effective release half-activation, fusion-rate limit, and one-site pool are explicit modeling assumptions, not fitted constants. Calcium uses a local point-source estimate plus first-order clearance, not a spatial diffusion/buffering simulation. Fusion is deterministic and expected; there is no discrete stochastic channel/release, pool replenishment, molecular SNARE model, transmitter diffusion, receptor, or postsynaptic response.
+- This model does not claim complete biological synaptic transmission. The linked HH single compartment does not propagate an action potential spatially.
+
+Files created/modified for Phase 3B
+- Created `src/simulation/synapse/chemicalSynapse.ts`, `src/simulation/synapse/chemicalSynapse.test.ts`, `src/simulation/synapse/hodgkinHuxleyTerminalInput.ts`, and `src/simulation/synapse/hodgkinHuxleyTerminalInput.test.ts`.
+- Created `src/workspaces/Lab/ChemicalSynapseModel.tsx` and `src/workspaces/Lab/ChemicalSynapseModel.css`.
+- Modified `src/workspaces/Lab/ExperimentModels.tsx`, `src/workspaces/Lab/ExperimentModels.css`, `src/workspaces/Lab/LabWorkspace.tsx`, and `src/workspaces/Lab/experimentData.ts`; updated this handoff.
+- The required production build refreshed generated Vite output in `dist/` and TypeScript build metadata. Those generated files are not application source changes.
+
+Verification
+- `npm test`: passed, 6 test files / 43 tests, including 8 synapse-engine tests and 2 explicit HH-to-synapse adapter tests. Coverage includes inward/outward current sign, calcium entry and clearance, voltage threshold, conductance/sensor-distance effects, Hill sensitivity, pool conservation, repeatability, timestep refinement, and invalid input handling.
+- `npm run build`: passed TypeScript and Vite production build (662 modules). Vite continues to warn that the main JavaScript chunk exceeds 500 kB; final chunk is about 1.25 MB uncompressed (about 348 kB gzip).
+- No browser/DOM interaction or visual regression test was run because the project has no DOM testing environment. Lab wiring was type-checked and production-built; the pure simulation and coupling adapter were directly tested.
+
+Unfinished work and next step
+- Obtain synapse-model review from a domain neuroscientist and compare the output against a documented, independently computed benchmark before treating it as quantitatively validated.
+- A future phase could add validated calcium buffering or more than one release site only after selecting the synapse preparation and obtaining corresponding parameters/evidence. Do not interpret the current adjustable assumptions as a universal synapse model.
+
+Phase 3C — Three-Neuron Network
+
+Implemented
+- Added a reusable synchronous network engine with three independent single-compartment Hodgkin–Huxley neurons (A, B, C), two directed chemical synapses (A→B and B→C), and an external pulse applied to A. Each connection owns its own presynaptic calcium/release state, glutamate-cleft concentration, and postsynaptic AMPA activation state.
+- Reused the existing Hodgkin–Huxley and Phase 3B synapse equations through exported state, derivative, current, and sampling helpers; no second implementation of those biological kernels was added.
+- Each RK4 stage evaluates all neuron and connection derivatives from the same network state. The default 0.005 ms step is reduced as needed for Hodgkin–Huxley temperature limits and the configured chemical time scales; integration steps also end at external-pulse boundaries.
+- Added the network to the existing Lab model picker. Its controls adjust A's pulse amplitude/duration and AMPA maximum conductance. Computed traces show membrane voltages, calcium current/concentration, expected release, cleft glutamate, AMPA activation/current, firing events, and directed connection identity. The glutamate indicator exposes its 0.0001 μM display threshold rather than treating below-threshold baseline release as zero.
+
+Model equations, evidence, and assumptions
+- Cleft glutamate: d[Glu]/dt = expected vesicle release rate × glutamate molecules per vesicle ÷ (Avogadro constant × cleft volume) − [Glu]/clearance time constant.
+- Effective AMPA activation: ds/dt = kon[Glu](1−s) − koff·s; conductance density g = gmax·s; outward-positive current density I = g(Vpost−Erev). The sign is inverted when passed to the HH model, whose applied current is inward-positive.
+- Default illustrative parameters: 3,000 glutamate molecules/vesicle, 2×10⁻¹⁷ L well-mixed cleft, 0.5 ms first-order clearance, kon=0.01 μM⁻¹ms⁻¹, koff=0.5 ms⁻¹, gmax=0.5 mS/cm², and Erev=0 mV. These defaults are not fitted to one preparation or universal measured constants.
+- The HH component is the classical squid-axon single-compartment model. Presynaptic voltage is supplied directly as a terminal input; there is no axonal propagation, conduction delay, or spatial geometry. The transmitter/AMPA stages are effective deterministic approximations, not complete diffusion, receptor-binding, or postsynaptic-morphology models.
+- References used for component equations/mechanisms: Hodgkin & Huxley (1952), DOI https://doi.org/10.1113/jphysiol.1952.sp004764; Scarnati et al. (2020), DOI https://doi.org/10.3389/fnsyn.2020.00017; Clements et al. (1992), DOI https://doi.org/10.1126/science.1359647; Destexhe et al. (1994), DOI https://doi.org/10.1162/neco.1994.6.1.14. These motivate components but do not validate the combined network or its default parameterization.
+
+Files created/modified for Phase 3C
+- Created `src/simulation/network/threeNeuronNetwork.ts` and `src/simulation/network/threeNeuronNetwork.test.ts`.
+- Created `src/workspaces/Lab/NetworkModel.tsx` and `src/workspaces/Lab/NetworkModel.css`.
+- Modified `src/simulation/neuron/hodgkinHuxley.ts` and `src/simulation/synapse/chemicalSynapse.ts` to expose reusable, typed model-kernel helpers; existing standalone model APIs remain.
+- Modified `src/workspaces/Lab/ExperimentModels.tsx`, `src/workspaces/Lab/ExperimentModels.css`, and `src/workspaces/Lab/experimentData.ts` to register the network in the existing Lab.
+- The build refreshed tracked Vite output in `dist/` and `tsconfig.tsbuildinfo`; those are generated artifacts. No source files were deleted for this phase.
+
+Verification
+- `npm test`: passed, 7 test files / 53 tests. The 10 network tests verify computed A→B→C firing, connection-removal effects, no forced downstream spikes, separate neuron states, transmitter scaling/clearance, AMPA current equation/sign, vesicle-pool conservation, kinetic timestep reduction, deterministic/refined-step behavior, finite bounded states at maximum Lab controls, and invalid inputs.
+- `npm run build`: passed TypeScript and Vite production build (665 modules). Vite reports a large-chunk advisory; the main JavaScript bundle is 1,276.03 kB uncompressed / 353.17 kB gzip.
+- `git diff --check`: passed.
+- No browser/DOM interaction or visual regression test was run; the project has no configured DOM test environment. UI integration was type-checked and production-built.
+
+Limitations and recommended next step
+- Tests establish software behavior and qualitative coupling, not biological validity. The component sources do not validate this combined model; defaults need domain review and comparison against an independently computed benchmark before quantitative interpretation.
+- Release remains deterministic and expected-valued with one finite, non-replenished pool per connection. No stochastic fusion, receptor subtypes/desensitization, spatial axon, multi-compartment morphology, or circuit plasticity is implemented.
+- Before expanding the network, add an interaction-level check when a DOM test environment is available and document an independently generated reference trace for numerical comparison. Keep the current single-compartment and synapse limitations explicit.

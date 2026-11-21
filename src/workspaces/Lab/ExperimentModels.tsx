@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { LEARNING_EXPERIMENTS } from "./experimentData";
+import { HodgkinHuxleyModel } from "./HodgkinHuxleyModel";
+import { ChemicalSynapseModel } from "./ChemicalSynapseModel";
+import { NetworkModel } from "./NetworkModel";
 import "./ExperimentModels.css";
 
 interface ExperimentModelsProps {
@@ -9,6 +12,10 @@ interface ExperimentModelsProps {
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const isBiophysicalExperiment = (id: string) =>
+  id === "hodgkin-huxley" ||
+  id === "chemical-synapse" ||
+  id === "communication-network";
 
 export function ExperimentModels({
   searchQuery,
@@ -30,6 +37,10 @@ export function ExperimentModels({
   );
   const selectedExperiment = LEARNING_EXPERIMENTS.find((item) => item.id === selectedExperimentId)
     ?? LEARNING_EXPERIMENTS[0];
+  const isBiophysicalModel = isBiophysicalExperiment(selectedExperiment.id);
+  const biophysicalModelCount = LEARNING_EXPERIMENTS.filter(({ id }) =>
+    isBiophysicalExperiment(id),
+  ).length;
   const predictionError = actualOutcome - expectedOutcome;
   const updatedExpectation = clamp(expectedOutcome + learningRate * predictionError, 0, 100);
   const memoryStrength = Math.round(
@@ -72,9 +83,12 @@ export function ExperimentModels({
         <div>
           <div className="labEyebrow"><span className="modelPulse" /> LEARNING MODELS <span className="labEyebrowDivider">/</span> EDUCATIONAL</div>
           <h2>Explore a model</h2>
-          <p>Change one or more inputs and observe how a simplified mathematical model responds.</p>
+          <p>Change inputs and observe how conceptual models and coupled neuron/synapse simulations respond.</p>
         </div>
-        <div className="modelStatus">3 INTERACTIVE CONCEPTS <span>·</span> NO BIOLOGICAL DATA</div>
+        <div className="modelStatus">
+          {LEARNING_EXPERIMENTS.length} INTERACTIVE MODELS <span>·</span>{" "}
+          {LEARNING_EXPERIMENTS.length - biophysicalModelCount} CONCEPTUAL / {biophysicalModelCount} BIOPHYSICAL
+        </div>
       </header>
 
       <nav className="experimentPicker" aria-label="Select an educational model">
@@ -97,13 +111,27 @@ export function ExperimentModels({
       <section className="experimentModelPanel" aria-live="polite">
         <div className="modelPanelHeader">
           <div>
-            <span className="modelCode">CONCEPT MODEL · {selectedExperiment.id.toUpperCase().replace(/-/g, "_")}</span>
+            <span className="modelCode">
+              {isBiophysicalModel ? "BIOPHYSICAL MODEL" : "CONCEPT MODEL"}
+              {" · "}{selectedExperiment.id.toUpperCase().replace(/-/g, "_")}
+            </span>
             <h3>{selectedExperiment.name}</h3>
             <p>{selectedExperiment.description}</p>
           </div>
-          <span className="modelTag">EDUCATIONAL · NOT VALIDATED</span>
+          <span className="modelTag">
+            {selectedExperiment.id === "hodgkin-huxley"
+              ? "CLASSICAL · SINGLE-COMPARTMENT"
+              : selectedExperiment.id === "chemical-synapse"
+                ? "MECHANISTIC · SINGLE-SITE APPROXIMATION"
+                : selectedExperiment.id === "communication-network"
+                  ? "COUPLED · THREE-NODE HH/AMPA NETWORK"
+                : "EDUCATIONAL · NOT VALIDATED"}
+          </span>
         </div>
 
+        {selectedExperiment.id === "hodgkin-huxley" && <HodgkinHuxleyModel />}
+        {selectedExperiment.id === "chemical-synapse" && <ChemicalSynapseModel />}
+        {selectedExperiment.id === "communication-network" && <NetworkModel />}
         {selectedExperiment.id === "reward-learning" && (
           <div className="modelContent">
             <div className="modelControls">
@@ -199,10 +227,27 @@ export function ExperimentModels({
           </div>
         )}
 
-        <div className="modelDisclaimer">
-          <span>i</span>
-          <p>These are educational mathematical demonstrations with deliberately simplified equations. They are not validated biological simulations, measurements, clinical guidance, or individual predictions.</p>
-        </div>
+        {selectedExperiment.id === "hodgkin-huxley" ? (
+          <div className="modelDisclaimer">
+            <span>i</span>
+            <p>This classical single-compartment model represents the squid giant axon, not a complete human neuron. It omits morphology, spatial propagation, synapses, and many cellular mechanisms; it is not a physiological recording or clinical predictor.</p>
+          </div>
+        ) : selectedExperiment.id === "chemical-synapse" ? (
+          <div className="modelDisclaimer">
+            <span>i</span>
+            <p>The voltage trace is supplied as an explicit terminal input from a single-compartment Hodgkin–Huxley model; it does not represent axonal propagation. Calcium handling and Hill-based expected fusion are simplified, deterministic approximations, not a complete molecular synapse or a fitted universal parameter set.</p>
+          </div>
+        ) : selectedExperiment.id === "communication-network" ? (
+          <div className="modelDisclaimer">
+            <span>i</span>
+            <p>This coupled educational network combines the squid-axon Hodgkin–Huxley model with simplified presynaptic calcium/release and effective AMPA kinetics. Compartment voltage is used directly as terminal input without spatial propagation or conduction delay. The combined model and its illustrative transmitter/receptor parameters have not had independent quantitative or domain-expert validation.</p>
+          </div>
+        ) : (
+          <div className="modelDisclaimer">
+            <span>i</span>
+            <p>These are educational mathematical demonstrations with deliberately simplified equations. They are not validated biological simulations, measurements, clinical guidance, or individual predictions.</p>
+          </div>
+        )}
       </section>
     </div>
   );

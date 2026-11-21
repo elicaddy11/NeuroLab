@@ -41,6 +41,24 @@ export const LEARNING_EXPERIMENTS: LearningExperiment[] = [
     description: "Explore a simplified inverted-U relationship between arousal, attention, and working memory.",
     keywords: ["stress", "arousal", "attention", "working memory", "cognitive performance"],
   },
+  {
+    id: "hodgkin-huxley",
+    name: "Hodgkin-Huxley action potential",
+    description: "Integrate a classical single-compartment squid-axon conductance model.",
+    keywords: ["neuron", "hodgkin", "huxley", "action potential", "membrane", "sodium", "potassium"],
+  },
+  {
+    id: "chemical-synapse",
+    name: "Chemical synaptic transmission",
+    description: "Model voltage-gated calcium entry and calcium-dependent expected vesicle fusion.",
+    keywords: ["synapse", "presynaptic", "calcium", "calcium channel", "vesicle", "neurotransmitter", "release", "CaV"],
+  },
+  {
+    id: "communication-network",
+    name: "Three-neuron communication network",
+    description: "Couple three Hodgkin-Huxley neurons through calcium-dependent glutamate release and AMPA currents.",
+    keywords: ["network", "neuron", "feedforward", "communication", "AMPA", "glutamate", "synapse", "coupled"],
+  },
 ];
 
 export const EXPERIMENT_TEMPLATES: ExperimentTemplate[] = [

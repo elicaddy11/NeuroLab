@@ -18,6 +18,7 @@ import {
   BRAIN_DEEP_REGION_IDS,
   BRAIN_MESH_REGION_BY_ID,
 } from "./brainVisualizationData";
+import { findBrainRegionKnowledge } from "../../knowledge/adapters/brainKnowledgeAdapter";
 import "./BrainWorkspace.css";
 
 interface BrainWorkspaceProps {
@@ -50,12 +51,34 @@ export function BrainWorkspace({
     }
   }, [focusRegionId, focusRegionSequence]);
 
-  const selectedEntry = selectedRegionId ? findBrainRegion(selectedRegionId) : null;
-  const selectedRegion = selectedEntry?.region.details ? selectedEntry.region : null;
+  const selectedKnowledge = selectedRegionId
+    ? findBrainRegionKnowledge(selectedRegionId)
+    : undefined;
+  const selectedRegion = selectedKnowledge?.region ?? null;
   const selectedMeshRegion = selectedRegionId
     ? BRAIN_MESH_REGION_BY_ID.get(selectedRegionId)
     : undefined;
-  const details = selectedRegion?.details;
+  const details = selectedKnowledge?.legacyDetails;
+  const selectedName = selectedKnowledge?.entity.names.find(
+    ({ kind }) => kind === "preferred",
+  )?.value;
+  const claimText = (predicate: string) => {
+    const value = selectedKnowledge?.claims.find((claim) => claim.predicate === predicate)?.value;
+    return typeof value === "string" ? value : undefined;
+  };
+  const beginnerExplanation = claimText("beginner-explanation");
+  const advancedExplanation = claimText("advanced-explanation");
+  const functionTexts = selectedKnowledge?.claims.flatMap((claim) =>
+    claim.predicate === "function" && typeof claim.value === "string"
+      ? [claim.value]
+      : [],
+  ) ?? [];
+  const cognitiveClaims = selectedKnowledge?.claims.filter(
+    (claim) => claim.predicate === "cognitive-contribution" && typeof claim.value === "string",
+  ) ?? [];
+  const supportedRelatedIds = selectedKnowledge?.relationships.length
+    ? selectedKnowledge.relationships.map(({ objectId }) => objectId)
+    : undefined;
 
   const changeZoom = (amount: number) => {
     const controls = controlsRef.current;
@@ -216,8 +239,13 @@ export function BrainWorkspace({
             <div className="fade-in">
               <div className="structureProfile">
                 <span className="structureEyebrow mono">{selectedRegion.abbr} · INTRODUCTORY OVERVIEW</span>
-                <h2>{selectedRegion.label}</h2>
-                <p>{details.description}</p>
+                <h2>{selectedName ?? selectedRegion.label}</h2>
+                <p>{beginnerExplanation ?? details.description}</p>
+                {beginnerExplanation && (
+                  <p className="profileCopy">
+                    Simplified · source-checked · not expert-reviewed
+                  </p>
+                )}
               </div>
               <div className={`meshCoverageNote ${selectedMeshRegion ? "" : "unavailable"}`}>
                 <strong>
@@ -235,24 +263,89 @@ export function BrainWorkspace({
               <PanelSection title="Anatomical location">
                 <p className="profileCopy">{details.location}</p>
               </PanelSection>
+              {advancedExplanation && (
+                <>
+                  <div className="panelDivider" />
+                  <PanelSection title="Advanced explanation">
+                    <p className="profileCopy">{advancedExplanation}</p>
+                    <p className="profileCopy">
+                      Established · source-checked · not expert-reviewed
+                    </p>
+                  </PanelSection>
+                </>
+              )}
               <div className="panelDivider" />
               <PanelSection title="Major functions">
-                <ul className="profileList">{details.functions.map((item) => <li key={item}>{item}</li>)}</ul>
+                <ul className="profileList">
+                  {(functionTexts.length > 0 ? functionTexts : details.functions)
+                    .map((item) => <li key={item}>{item}</li>)}
+                </ul>
+                {functionTexts.length > 0 && (
+                  <p className="profileCopy">
+                    Established · source-checked · not expert-reviewed
+                  </p>
+                )}
               </PanelSection>
+              {cognitiveClaims.length > 0 && (
+                <>
+                  <div className="panelDivider" />
+                  <PanelSection title="Cognitive contributions">
+                    <ul className="profileList">
+                      {cognitiveClaims.map((claim) => (
+                        <li key={claim.id}>
+                          {claim.value}
+                          <span className="profileCopy"> Established · source-checked · not expert-reviewed</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </PanelSection>
+                </>
+              )}
               <div className="panelDivider" />
               <PanelSection title="Connected structures">
                 <div className="connectedList">
-                  {details.connections.map((id) => {
+                  {(supportedRelatedIds ?? details.connections).map((id) => {
                     const connection = findBrainRegion(id)?.region;
                     if (!connection) return null;
                     return <button type="button" className="connectionChip" key={id} onClick={() => selectRegion(connection)}>{connection.label}<span>↗</span></button>;
                   })}
                 </div>
+                {supportedRelatedIds && supportedRelatedIds.length > 0 && (
+                  <p className="profileCopy">
+                    Established · source-checked · not expert-reviewed. Pathway-level relationships; not a claim of direct projection between every part of these lobes.
+                  </p>
+                )}
               </PanelSection>
               <div className="panelDivider" />
               <PanelSection title="Associated systems">
                 <div className="tagList">{details.systems.map((system) => <span className="tag" key={system}>{system}</span>)}</div>
               </PanelSection>
+              {selectedKnowledge?.sources.length ? (
+                <>
+                  <div className="panelDivider" />
+                  <PanelSection title="Scientific sources">
+                    <ul className="profileList">
+                      {selectedKnowledge.sources.map((source) => {
+                        const href = source.url ?? (source.doi
+                          ? `https://doi.org/${source.doi}`
+                          : undefined);
+                        return (
+                          <li key={source.id}>
+                            {source.authors?.join(", ")} ({source.year}). {source.title}.{" "}
+                            {source.containerTitle} {source.volume}
+                            {source.issue ? `(${source.issue})` : ""}{source.pages ? `:${source.pages}` : ""}.{" "}
+                            {href && (
+                              <a href={href} target="_blank" rel="noreferrer">
+                                {source.doi ?? href}
+                              </a>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </PanelSection>
+                </>
+              ) : null}
             </div>
           )}
         </Panel>
